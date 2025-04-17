@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import {NextIntlClientProvider} from 'next-intl';
 import {getMessages} from 'next-intl/server';
-import { AuthProvider } from '@/context/AuthContext';
+import { ClientProviders } from '@/providers/ClientProviders';
 import "@/globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -25,7 +25,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <AuthProvider>
+        <ClientProviders>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <div className="min-h-screen flex flex-col">
               <Navbar />
@@ -39,7 +39,7 @@ export default async function LocaleLayout({
               </footer>
             </div>
           </NextIntlClientProvider>
-        </AuthProvider>
+        </ClientProviders>
       </body>
     </html>
   );
