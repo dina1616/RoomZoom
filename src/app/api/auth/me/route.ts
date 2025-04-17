@@ -6,6 +6,20 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) { // Use NextRequest if needed for more details
+  // For development purposes, always return a mock user when in development
+  if (process.env.NODE_ENV === 'development') {
+    // Return a mock admin user for development
+    const mockUser = {
+      id: 'mock-user-id',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      role: 'ADMIN',
+      createdAt: new Date().toISOString()
+    };
+
+    return NextResponse.json({ user: mockUser });
+  }
+  
   try {
     const token = cookies().get('auth_token')?.value;
 

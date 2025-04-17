@@ -56,7 +56,7 @@ export default function Testimonials() {
                 opacity: index === activeIndex ? 1 : 0,
                 x: index === activeIndex ? 0 : -100,
               }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
             >
               <div className="bg-white rounded-xl shadow-lg p-8 md:p-12">
                 <div className="flex flex-col md:flex-row items-center gap-8">
