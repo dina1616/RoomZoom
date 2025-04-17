@@ -8,10 +8,10 @@ interface Property {
   id: string;
   title: string;
   price: number;
+  address: string;
   bedrooms: number;
   bathrooms: number;
-  addressString: string;
-  media: { url: string }[];
+  images: string;
 }
 
 export default function PropertiesPage() {
@@ -83,9 +83,9 @@ export default function PropertiesPage() {
               transition={{ delay: index * 0.1 }}
             >
               <div className="h-48 w-full relative bg-gray-200">
-                {property.media && property.media.length > 0 ? (
+                {property.images ? (
                   <img
-                    src={property.media[0].url}
+                    src={property.images}
                     alt={property.title}
                     className="w-full h-full object-cover"
                   />
@@ -97,7 +97,7 @@ export default function PropertiesPage() {
               </div>
               <div className="p-4">
                 <h2 className="text-xl font-semibold mb-2 truncate">{property.title}</h2>
-                <p className="text-gray-600 mb-2 truncate">{property.addressString}</p>
+                <p className="text-gray-600 mb-2 truncate">{property.address}</p>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-blue-600 font-bold">£{property.price}/month</span>
                   <div className="text-gray-600 text-sm">

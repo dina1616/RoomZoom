@@ -22,21 +22,18 @@ export async function GET(
         const property = await prisma.property.findUnique({
             where: { id: propertyId },
             include: {
-                // Include all necessary details for the property page
-                media: true,
-                address: true,
-                amenities: true,
+                // Include only valid relation fields
                 owner: {
                     select: { 
                         id: true, 
                         name: true, 
-                        email: true, // Include owner email maybe?
-                        landlordProfile: true // Include landlord specific profile details
+                        email: true,
+                        landlordProfile: true
                     }
                 },
-                reviews: { // Optionally include reviews here, or fetch separately
+                reviews: {
                     orderBy: { createdAt: 'desc' },
-                    take: 5, // Limit initial reviews maybe?
+                    take: 5,
                     include: {
                         user: { select: { id: true, name: true } }
                     }
@@ -75,7 +72,7 @@ const UpdatePropertySchema = z.object({
   title: z.string().min(5).optional(),
   description: z.string().min(10).optional(),
   price: z.number().positive().optional(),
-  addressString: z.string().min(5).optional(), 
+  address: z.string().min(5).optional(), // Changed from addressString to address
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   propertyType: z.string().min(1).optional(), 
@@ -84,7 +81,8 @@ const UpdatePropertySchema = z.object({
   available: z.string().datetime().optional(), 
   borough: z.string().optional().nullable(), // Allow null to clear optional string fields
   tubeStation: z.string().optional().nullable(),
-  // TODO: Add updates for address, amenities, media later
+  // Media is now a string field
+  images: z.string().optional(),
 });
 
 export async function PATCH(
@@ -124,11 +122,9 @@ export async function PATCH(
         const updatedProperty = await prisma.property.update({
             where: { id: propertyId },
             data: updateData,
-             include: { // Return updated data with relations
-                media: true,
-                address: true,
-                amenities: true,
-                owner: { select: { id: true, name: true } }
+            include: {
+                owner: { select: { id: true, name: true } },
+                reviews: true
             },
         });
 

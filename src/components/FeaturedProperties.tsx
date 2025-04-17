@@ -12,17 +12,10 @@ interface Property {
   tubeStation?: string;
   bedrooms: number;
   bathrooms: number;
-  images: string[];
-  amenities: {
-    wifi: boolean;
-    laundry: boolean;
-    kitchen: boolean;
-    waterBills: boolean;
-    petsAllowed: boolean;
-  };
+  images: string;
   rating?: number;
   reviewCount?: number;
-  availableFrom: Date;
+  available: Date;
   propertyType: string;
 }
 
@@ -89,11 +82,11 @@ export default function FeaturedProperties() {
             tubeStation={property.tubeStation}
             bedrooms={property.bedrooms}
             bathrooms={property.bathrooms}
-            imageUrl={property.images}
-            amenities={property.amenities}
+            imageUrl={[property.images]}
+            amenities={{}}
             rating={property.rating}
             reviewCount={property.reviewCount}
-            availableFrom={new Date(property.availableFrom)}
+            availableFrom={new Date(property.available)}
             propertyType={property.propertyType}
           />
         </motion.div>

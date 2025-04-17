@@ -22,13 +22,7 @@ interface PropertyCardProps {
   bathrooms: number;
   imageUrl: string[];
   squareFootage?: number;
-  amenities: {
-    wifi: boolean;
-    laundry: boolean;
-    kitchen: boolean;
-    waterBills: boolean;
-    petsAllowed: boolean;
-  };
+  amenities?: any;
   rating?: number;
   reviewCount?: number;
   availableFrom: Date;
@@ -47,7 +41,7 @@ export default function PropertyCard({
   bathrooms,
   imageUrl,
   squareFootage,
-  amenities,
+  amenities = {},
   rating,
   reviewCount,
   availableFrom,
@@ -58,12 +52,16 @@ export default function PropertyCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
+  const hasAmenity = (name: string): boolean => {
+    return false;
+  };
+
   const amenitiesList: Amenity[] = [
-    { icon: <FaWifi className="w-4 h-4" />, label: 'WiFi', available: amenities.wifi },
-    { icon: <MdLocalLaundryService className="w-4 h-4" />, label: 'Laundry', available: amenities.laundry },
-    { icon: <MdKitchen className="w-4 h-4" />, label: 'Kitchen', available: amenities.kitchen },
-    { icon: <FaWater className="w-4 h-4" />, label: 'Bills Included', available: amenities.waterBills },
-    { icon: <MdPets className="w-4 h-4" />, label: 'Pets Allowed', available: amenities.petsAllowed },
+    { icon: <FaWifi className="w-4 h-4" />, label: 'WiFi', available: hasAmenity('WiFi') },
+    { icon: <MdLocalLaundryService className="w-4 h-4" />, label: 'Laundry', available: hasAmenity('Laundry') },
+    { icon: <MdKitchen className="w-4 h-4" />, label: 'Kitchen', available: hasAmenity('Kitchen') },
+    { icon: <FaWater className="w-4 h-4" />, label: 'Bills Included', available: hasAmenity('Bills Included') },
+    { icon: <MdPets className="w-4 h-4" />, label: 'Pets Allowed', available: hasAmenity('Pet Friendly') || hasAmenity('Pets Allowed') },
   ];
 
   const nextImage = () => {

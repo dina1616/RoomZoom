@@ -122,10 +122,8 @@ export async function GET(request: NextRequest) {
     try {
       // Return a small subset of properties as featured
       const properties = await prisma.property.findMany({
-        where: { verified: true },
         take: 6,
         include: {
-          media: { take: 1 }, // Just get the first image
           owner: { select: { name: true } }
         },
         orderBy: { 
@@ -158,7 +156,7 @@ export async function GET(request: NextRequest) {
 
   // Build Prisma where clause dynamically
   const where: any = {
-    verified: true,
+    // Don't filter by verified status to show all properties
   };
 
   if (minPriceParam) {
@@ -204,9 +202,6 @@ export async function GET(request: NextRequest) {
     const properties = await prisma.property.findMany({
       where,
       include: {
-        media: true, 
-        address: true,
-        amenities: true,
         owner: {
           select: { 
             id: true,
@@ -223,7 +218,21 @@ export async function GET(request: NextRequest) {
       // TODO: Add sorting
     });
 
-    return NextResponse.json(properties);
+    // Calculate average rating
+    const propertiesWithRating = properties.map((property: any) => {
+      const ratings = property.reviews.map((review: any) => review.rating);
+      const avgRating = ratings.length > 0 
+        ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
+        : null;
+      
+      return {
+        ...property,
+        rating: avgRating,
+        reviewCount: ratings.length
+      };
+    });
+
+    return NextResponse.json(propertiesWithRating);
   } catch (error) {
     console.error("Error fetching properties:", error);
     // Log the failing where clause for debugging

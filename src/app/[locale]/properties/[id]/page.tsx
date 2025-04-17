@@ -10,28 +10,32 @@ import { MdChair } from 'react-icons/md';
 import { BsCalendarDate, BsHouse } from 'react-icons/bs';
 import dynamic from 'next/dynamic';
 
-// Define Property type
+// Updated Property type to match the actual API response
 type Property = {
   id: string;
   title: string;
   description: string;
   price: number;
   address: string;
+  borough?: string;
   bedrooms: number;
   bathrooms: number;
   propertyType: string;
-  isAvailable: boolean;
-  availableFrom: string;
-  sqMeters: number;
-  isFurnished: boolean;
-  nearestUniversity: string;
-  distanceToUniversity: number;
-  imageUrls: string[];
-  createdAt: string;
-  updatedAt: string;
+  available: Date | string;
+  images: string;
   latitude: number;
   longitude: number;
-  userId: string;
+  tubeStation?: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  averageRating?: number;
+  owner?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+  reviews?: any[];
 };
 
 // Dynamically load PropertyMap component to avoid SSR issues
@@ -46,6 +50,7 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -58,7 +63,15 @@ export default function PropertyDetail() {
         }
         
         const data = await res.json();
-        setProperty(data);
+        
+        // Extract the property object from the response
+        const propertyData = data.property;
+        setProperty(propertyData);
+        
+        // Handle images - convert from string to array
+        if (propertyData.images) {
+          setImageUrls([propertyData.images]);
+        }
       } catch (err) {
         setError('Error loading property details. Please try again later.');
         console.error(err);
@@ -73,17 +86,17 @@ export default function PropertyDetail() {
   }, [id]);
 
   const nextImage = () => {
-    if (property?.imageUrls && property.imageUrls.length > 0) {
+    if (imageUrls.length > 1) {
       setCurrentImageIndex((prevIndex) => 
-        prevIndex === property.imageUrls.length - 1 ? 0 : prevIndex + 1
+        prevIndex === imageUrls.length - 1 ? 0 : prevIndex + 1
       );
     }
   };
 
   const prevImage = () => {
-    if (property?.imageUrls && property.imageUrls.length > 0) {
+    if (imageUrls.length > 1) {
       setCurrentImageIndex((prevIndex) => 
-        prevIndex === 0 ? property.imageUrls.length - 1 : prevIndex - 1
+        prevIndex === 0 ? imageUrls.length - 1 : prevIndex - 1
       );
     }
   };
@@ -121,7 +134,8 @@ export default function PropertyDetail() {
     );
   }
 
-  const formattedDate = new Date(property.availableFrom).toLocaleDateString('en-GB', {
+  // Format the date
+  const formattedDate = new Date(property.available).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -137,17 +151,17 @@ export default function PropertyDetail() {
         {/* Left column - Image gallery */}
         <div>
           <div className="relative rounded-lg overflow-hidden h-[400px] bg-gray-100">
-            {property.imageUrls && property.imageUrls.length > 0 ? (
+            {imageUrls.length > 0 ? (
               <>
                 <Image 
-                  src={property.imageUrls[currentImageIndex] || "/placeholder-property.jpg"} 
+                  src={imageUrls[currentImageIndex] || "/placeholder-property.jpg"} 
                   alt={property.title}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   style={{ objectFit: 'cover' }}
                   priority
                 />
-                {property.imageUrls.length > 1 && (
+                {imageUrls.length > 1 && (
                   <>
                     <button 
                       onClick={prevImage} 
@@ -162,7 +176,7 @@ export default function PropertyDetail() {
                       &gt;
                     </button>
                     <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                      {property.imageUrls.map((_, index) => (
+                      {imageUrls.map((_, index) => (
                         <span 
                           key={index} 
                           className={`w-2 h-2 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-gray-400'}`}
@@ -214,36 +228,40 @@ export default function PropertyDetail() {
               <span>{property.bathrooms} Bathroom{property.bathrooms !== 1 ? 's' : ''}</span>
             </div>
             <div className="flex items-center">
-              <BiArea className="text-blue-500 mr-2 text-xl" />
-              <span>{property.sqMeters} m²</span>
-            </div>
-            <div className="flex items-center">
               <BsHouse className="text-blue-500 mr-2 text-xl" />
               <span>{property.propertyType}</span>
-            </div>
-            <div className="flex items-center">
-              <MdChair className="text-blue-500 mr-2 text-xl" />
-              <span>{property.isFurnished ? 'Furnished' : 'Unfurnished'}</span>
             </div>
             <div className="flex items-center">
               <BsCalendarDate className="text-blue-500 mr-2 text-xl" />
               <span>Available from {formattedDate}</span>
             </div>
+            {property.tubeStation && (
+              <div className="flex items-center">
+                <span className="text-blue-500 mr-2">🚇</span>
+                <span>Near {property.tubeStation} Station</span>
+              </div>
+            )}
+            {property.borough && (
+              <div className="flex items-center">
+                <span className="text-blue-500 mr-2">📍</span>
+                <span>{property.borough}</span>
+              </div>
+            )}
           </div>
           
-          {property.nearestUniversity && (
+          {property.averageRating && (
             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center text-blue-800">
-                <FaUniversity className="mr-2 text-xl" />
-                <span className="font-semibold">Near {property.nearestUniversity}</span>
+                <span className="font-semibold mr-2">Rating:</span>
+                <span className="text-yellow-500">
+                  {'★'.repeat(Math.round(property.averageRating))}
+                  {'☆'.repeat(5 - Math.round(property.averageRating))}
+                </span>
+                <span className="ml-2">{property.averageRating.toFixed(1)}/5</span>
               </div>
-              {property.distanceToUniversity && (
-                <p className="text-blue-700 mt-1">
-                  {property.distanceToUniversity < 1 
-                    ? `${Math.round(property.distanceToUniversity * 1000)} meters away` 
-                    : `${property.distanceToUniversity.toFixed(1)} km away`}
-                </p>
-              )}
+              <p className="text-blue-700 mt-1">
+                Based on {property.reviews?.length || 0} reviews
+              </p>
             </div>
           )}
           
@@ -251,6 +269,16 @@ export default function PropertyDetail() {
             <h3 className="text-lg font-semibold mb-2">Description</h3>
             <p className="text-gray-600 whitespace-pre-line">{property.description}</p>
           </div>
+          
+          {property.owner && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Contact Landlord</h3>
+              <p className="text-gray-600">
+                {property.owner.name}
+                {property.owner.email && <span className="block mt-1">{property.owner.email}</span>}
+              </p>
+            </div>
+          )}
           
           <div className="mt-8">
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
