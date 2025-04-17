@@ -1,0 +1,22 @@
+{
+  "greeting": "Hello!",
+  "search": {
+    "placeholder": "Search properties...",
+    "button": "Search"
+  },
+  "filters": {
+    "budget": "Budget",
+    "amenities": "Amenities"
+  },
+  "Index": {
+    "title": "RoomZoom - Student Housing in London"
+  },
+  "Navigation": {
+    "home": "Home",
+    "properties": "Properties",
+    "map": "Map",
+    "about": "About",
+    "login": "Login",
+    "register": "Register"
+  }
+} 

@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // PostgreSQL provider (kept for reference)
+  // provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  password      String
+  role          String     @default("STUDENT")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  favorites     Property[] @relation("UserFavorites")
+  properties    Property[] @relation("PropertyOwner")
+  reviews       Review[]
+  landlordProfile LandlordProfile?
+}
+
+model Property {
+  id            String     @id @default(cuid())
+  title         String
+  description   String
+  price         Float
+  addressString String     // Original simple address string
+  borough       String?
+  latitude      Float
+  longitude     Float
+  tubeStation   String?
+  propertyType  String
+  bedrooms      Int
+  bathrooms     Int
+  available     DateTime
+  media         Media[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  ownerId       String
+  owner         User       @relation("PropertyOwner", fields: [ownerId], references: [id])
+  favoritedBy   User[]     @relation("UserFavorites")
+  reviews       Review[]
+  externalId    String?    // For Airbnb-like API reference
+  verified      Boolean    @default(false)
+  addressId     String?
+  address       Address?   @relation(fields: [addressId], references: [id])
+  amenities     Amenity[]
+}
+
+model Review {
+  id          String    @id @default(cuid())
+  rating      Int
+  comment     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  userId      String
+  propertyId  String
+  user        User      @relation(fields: [userId], references: [id])
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model LandlordProfile {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  companyName String?
+  phoneNumber String?
+  isVerified  Boolean @default(false)
+}
+
+model Address {
+  id           String     @id @default(cuid())
+  street       String
+  city         String
+  state        String?
+  postalCode   String
+  country      String
+  properties   Property[]
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  url        String
+  type       String
+  order      Int?
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Amenity {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  properties Property[]
+}
+
+model University {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  latitude  Float
+  longitude Float
+  address   String?
+}
+
+model TransportNode {
+  id        String  @id @default(cuid())
+  name      String
+  type      String
+  latitude  Float
+  longitude Float
+  lines     String?
+}

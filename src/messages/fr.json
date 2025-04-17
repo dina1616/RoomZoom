@@ -1,0 +1,11 @@
+{
+  "greeting": "Bonjour !",
+  "search": {
+    "placeholder": "Rechercher des propriétés...",
+    "button": "Rechercher"
+  },
+  "filters": {
+    "budget": "Budget",
+    "amenities": "Équipements"
+  }
+} 

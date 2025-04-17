@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: roomzoom-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-roomzoom}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-prod-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - roomzoom-network-prod
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Next.js Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: roomzoom-web-prod
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/roomzoom?schema=public}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - roomzoom-network-prod
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+networks:
+  roomzoom-network-prod:
+    driver: bridge
+
+volumes:
+  postgres-prod-data:
+    driver: local 
