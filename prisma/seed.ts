@@ -186,14 +186,28 @@ async function main() {
 
   // Seed Transport Nodes
   await prisma.transportNode.upsert({
-      where: { name: 'Goodge Street Station'}, // Use a unique constraint if defined, otherwise might need more complex upsert logic
+      where: { id: 'goodge-street' },
       update: {},
-      create: { name: 'Goodge Street Station', type: 'TUBE_STATION', latitude: 51.5207, longitude: -0.1341, lines: 'Northern' }
+      create: { 
+        id: 'goodge-street',
+        name: 'Goodge Street Station', 
+        type: 'TUBE_STATION', 
+        latitude: 51.5207, 
+        longitude: -0.1341, 
+        lines: 'Northern' 
+      }
   });
    await prisma.transportNode.upsert({
-      where: { name: 'South Kensington Station'},
+      where: { id: 'south-kensington' },
       update: {},
-      create: { name: 'South Kensington Station', type: 'TUBE_STATION', latitude: 51.4941, longitude: -0.1737, lines: 'District, Circle, Piccadilly' }
+      create: { 
+        id: 'south-kensington',
+        name: 'South Kensington Station', 
+        type: 'TUBE_STATION', 
+        latitude: 51.4941, 
+        longitude: -0.1737, 
+        lines: 'District, Circle, Piccadilly' 
+      }
   });
   console.log(`Seeded ${await prisma.transportNode.count()} transport nodes`);
 

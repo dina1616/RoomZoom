@@ -1,5 +1,5 @@
 import React from 'react';
-import RegisterForm from '@/components/AuthForms'; // Adjust path if needed
+import { RegisterForm } from '@/components/AuthForms'; // Fix import to use named export
 
 export default function RegisterPage() {
   return (

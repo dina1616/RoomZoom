@@ -1,7 +1,12 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaHome, FaUserCheck, FaBuilding, FaUsers, FaChartBar } from 'react-icons/fa';
+
+// Force dynamic rendering for all admin routes
+export const dynamic = 'force-dynamic';
 
 // This page group is protected by middleware for ADMIN role
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

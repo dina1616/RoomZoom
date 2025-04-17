@@ -5,6 +5,9 @@ import dynamic from 'next/dynamic';
 import FilterBar from '@/components/FilterBar';
 import type { FilterValues } from '@/components/FilterBar';
 
+// Don't use export const here since it conflicts with the dynamic import
+// This page will still be rendered dynamically through the configuration
+
 // --- Manual Type Definitions ---
 
 interface FetchedProperty {

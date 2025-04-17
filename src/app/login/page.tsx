@@ -1,6 +1,6 @@
 import React from 'react';
 // Import only LoginForm for this page
-import { LoginForm } from '@/components/AuthForms'; // Adjust path if needed
+import { LoginForm } from '@/components/AuthForms'; // Fix import to use named export
 
 export default function LoginPage() {
   return (

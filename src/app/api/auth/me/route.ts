@@ -1,70 +1,51 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/authUtils';
-import { PrismaClient } from '@prisma/client';
+import { verify } from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+// Force this route to be dynamic
+export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) { // Use NextRequest if needed for more details
-  // For development purposes, always return a mock user when in development
-  if (process.env.NODE_ENV === 'development') {
-    // Return a mock admin user for development
-    const mockUser = {
-      id: 'mock-user-id',
-      email: 'admin@example.com',
-      name: 'Admin User',
-      role: 'ADMIN',
-      createdAt: new Date().toISOString()
-    };
-
-    return NextResponse.json({ user: mockUser });
-  }
-  
+export async function GET(request: NextRequest) {
   try {
-    const token = cookies().get('auth_token')?.value;
-
+    // Get the token from the cookie
+    const token = cookies().get('authToken')?.value;
+    
     if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json(
+        { user: null, isAuthenticated: false, message: 'Not authenticated' },
+        { status: 401 }
+      );
     }
 
-    const decoded = verifyToken(token);
-
-    if (!decoded || !decoded.userId) {
-      // Token is invalid or expired, clear the cookie potentially
-      const response = NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
-      response.cookies.set('auth_token', '', { maxAge: 0, path: '/' });
-      return response;
-    }
-
-    // Fetch user data based on decoded userId (excluding password)
+    // Verify the token
+    const secret = process.env.JWT_SECRET || 'fallback-secret-do-not-use-in-production';
+    const decoded = verify(token, secret) as { id: string };
+    
+    // Get the user from the database
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: decoded.id },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
-        createdAt: true,
-        // Include other necessary fields like landlordProfile if needed
       },
     });
 
     if (!user) {
-        // User specified in token not found in DB (should not happen ideally)
-         const response = NextResponse.json({ error: 'User not found' }, { status: 404 });
-         response.cookies.set('auth_token', '', { maxAge: 0, path: '/' });
-         return response;
+      return NextResponse.json(
+        { user: null, isAuthenticated: false, message: 'User not found' },
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json({ user });
-
+    return NextResponse.json({ user, isAuthenticated: true });
   } catch (error) {
-    console.error("/api/auth/me error:", error);
+    console.error('Auth check error:', error);
     return NextResponse.json(
-      { error: "Failed to fetch user data" },
-      { status: 500 }
+      { user: null, isAuthenticated: false, message: 'Authentication failed' },
+      { status: 401 }
     );
-  } finally {
-     await prisma.$disconnect();
   }
 } 

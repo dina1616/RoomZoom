@@ -1,31 +1,45 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 
-const prisma = new PrismaClient();
+// Force this route to be dynamic
+export const dynamic = 'force-dynamic';
 
 // GET /api/map-overlays
-export async function GET(request: Request) {
+export async function GET() {
     try {
-        // Fetch all universities and transport nodes in parallel
-        const [universities, transportNodes] = await Promise.all([
+        // Use Promise.allSettled to handle partial failures
+        const [universitiesResult, transportNodesResult] = await Promise.allSettled([
             prisma.university.findMany(),
             prisma.transportNode.findMany()
         ]);
 
-        return NextResponse.json({ universities, transportNodes });
+        // Extract data or handle errors for each promise
+        const universities = universitiesResult.status === 'fulfilled' 
+            ? universitiesResult.value 
+            : [];
+        
+        const transportNodes = transportNodesResult.status === 'fulfilled'
+            ? transportNodesResult.value
+            : [];
 
+        // Log errors for debugging
+        if (universitiesResult.status === 'rejected') {
+            console.error('Failed to fetch universities:', universitiesResult.reason);
+        }
+        if (transportNodesResult.status === 'rejected') {
+            console.error('Failed to fetch transport nodes:', transportNodesResult.reason);
+        }
+
+        return NextResponse.json({ 
+            universities, 
+            transportNodes 
+        });
     } catch (error) {
-        console.error("Failed to fetch map overlay data:", error);
-        // Return empty arrays on error so the map can still load properties
-        return NextResponse.json(
-            { 
-                error: 'Failed to fetch overlay data', 
-                universities: [], 
-                transportNodes: [] 
-            }, 
-            { status: 500 }
-        );
-    } finally {
-        await prisma.$disconnect();
+        console.error('Failed to fetch map overlay data:', error);
+        // Return empty arrays instead of failing
+        return NextResponse.json({ 
+            universities: [], 
+            transportNodes: [] 
+        }, { status: 200 });
     }
 } 
