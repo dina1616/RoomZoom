@@ -1,195 +1,239 @@
-# RoomZoom - Student Housing Platform
+# RoomZoom
 
-A web application for students to find and review housing options in London.
+A modern platform designed to help students find and review housing options in London. RoomZoom simplifies the property search process with map-based exploration, detailed listings, and user reviews.
 
-## Getting Started
+## Features
 
-### Prerequisites
+- **Property Listings**: Browse detailed information about student accommodations
+- **Interactive Map Search**: Find properties near universities and transport links
+- **User Reviews**: Read and write authentic reviews for properties
+- **Multiple User Roles**: Student, Landlord, and Admin interfaces
+- **Multi-language Support**: English, French, and Arabic interfaces
+- **Property Verification System**: Verified badges for legitimate listings
 
-- Node.js (v18 or later)
-- SQLite (included, no separate installation needed)
-- Docker and Docker Compose (optional, for PostgreSQL setup)
+## Tech Stack
 
-### Installation
+- **Frontend**: Next.js 14 (App Router), React, TailwindCSS
+- **Backend**: Next.js API Routes
+- **Database**: Prisma ORM with SQLite (default) or PostgreSQL
+- **Maps**: React Leaflet for interactive maps
+- **Internationalization**: next-intl
+- **Authentication**: JWT-based auth with role-based access control
 
-#### Option 1: Local Setup with SQLite (Recommended)
+## Quick Start
 
-1. Clone the repository
+### Development Setup
+
+1. **Clone and Install**
    ```bash
-   git clone https://github.com/yourusername/RoomZoom.git
-   cd RoomZoom
-   ```
-
-2. Install dependencies
-   ```bash
+   git clone https://github.com/yourusername/rz.git
+   cd rz
    npm install
    ```
 
-3. Set up environment variables
-   - Copy `.env.example` to `.env.local`
+2. **Environment Setup**
    ```bash
+   # Copy example env file and update JWT_SECRET
    cp .env.example .env.local
    ```
-   - Update the `JWT_SECRET` in `.env.local` with a strong random string
 
-4. Set up the database
+3. **Database Setup (SQLite - Default)**
    ```bash
    npx prisma generate
    npx prisma db push
    npx prisma db seed
    ```
 
-5. Start the development server
+4. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. **Access the Application**
+   - Open [http://localhost:3000](http://localhost:3000) in your browser
 
-#### Option 2: Docker Setup with PostgreSQL (Advanced)
+### PostgreSQL Setup (Optional)
 
-To use PostgreSQL instead of SQLite, you need to:
+1. **Update Database Configuration**
+   - In `prisma/schema.prisma`: Change provider to `postgresql`
+   - Update DATABASE_URL in `.env.local`
 
-1. Update the database configuration:
-   - In `prisma/schema.prisma`: Uncomment the PostgreSQL provider and comment out SQLite
-   - In `.env.local`: Uncomment the PostgreSQL URL and comment out the SQLite one
-
-2. Follow the Docker setup instructions:
-
-   ```bash
-   ./docker-setup.sh
-   ```
-
-   Or manually with Docker Compose:
+2. **Run with Docker**
    ```bash
    docker-compose up -d
    docker-compose exec web npx prisma migrate dev
    docker-compose exec web npx prisma db seed
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-### Using for Production
-
-For production deployment with PostgreSQL:
+## Production Deployment
 
 ```bash
-# Build and start the production containers
+# Build and start production containers
 docker-compose -f docker-compose.production.yml up -d
 
 # Run migrations
 docker-compose -f docker-compose.production.yml exec web npx prisma migrate deploy
 ```
 
-## Features
+## Comprehensive Project Structure
 
-- Property listings with detailed information
-- Map-based property search
-- User reviews and ratings
-- Internationalization support (English, French, Arabic)
-- Landlord and student accounts
-- Property verification system
+### Core Directories
 
-## Tech Stack
+```
+rz/
+├── src/                   # Application source code
+│   ├── app/               # Next.js App Router pages
+│   ├── components/        # Reusable React components
+│   ├── lib/               # Core functionality and utilities
+│   ├── hooks/             # Custom React hooks
+│   ├── context/           # React Context providers
+│   ├── messages/          # Internationalization files
+│   ├── providers/         # Provider components
+│   ├── types/             # TypeScript type definitions
+│   ├── utils/             # Helper functions
+│   ├── i18n/              # i18n configuration
+│   ├── i18n.ts            # i18n setup
+│   ├── globals.css        # Global CSS styles
+│   └── middleware.ts      # Next.js middleware
+├── prisma/                # Database setup and migrations
+│   ├── schema.prisma      # Database schema
+│   ├── seed.ts            # Seed data
+│   └── migrations/        # Database migrations
+├── public/                # Static assets
+├── scripts/               # Utility scripts
+└── docker-compose files   # Docker configurations
+```
 
-- Next.js 14 (App Router)
-- Prisma ORM
-- SQLite (default) / PostgreSQL (optional)
-- React Leaflet for maps
-- next-intl for internationalization
-- TailwindCSS for styling
+### Key Application Routes
+
+- **`src/app/[locale]/page.tsx`**: Homepage with featured listings
+- **`src/app/[locale]/property/[id]/page.tsx`**: Property details page
+- **`src/app/[locale]/search/page.tsx`**: Search interface with map view
+- **`src/app/[locale]/login/page.tsx`**: User login page
+- **`src/app/[locale]/register/page.tsx`**: User registration page
+- **`src/app/[locale]/profile/page.tsx`**: User profile page
+- **`src/app/[locale]/dashboard/page.tsx`**: Landlord dashboard
+- **`src/app/[locale]/admin/page.tsx`**: Admin dashboard
+
+### Core Components
+
+- **`src/components/PropertyCard.tsx`**: Display property summary in listings
+- **`src/components/Map.tsx`**: Interactive map for property location
+- **`src/components/ReviewForm.tsx`**: Submit property reviews
+- **`src/components/PropertyDetails.tsx`**: Detailed property view
+- **`src/components/SearchFilters.tsx`**: Filter controls for property search
+- **`src/components/ImageGallery.tsx`**: Property images display
+- **`src/components/Navbar.tsx`**: Main navigation component
+- **`src/components/AuthForms/`**: Authentication-related forms
+
+### API Structure
+
+- **`src/app/api/auth/`**: Authentication endpoints
+  - **`login/route.ts`**: User login
+  - **`register/route.ts`**: User registration
+- **`src/app/api/properties/`**: Property management
+  - **`route.ts`**: List/create properties
+  - **`[id]/route.ts`**: Get/update/delete specific property
+  - **`verify/[id]/route.ts`**: Property verification
+- **`src/app/api/reviews/`**: Review management
+- **`src/app/api/users/`**: User management
+- **`src/app/api/media/`**: Media file handling
+
+### Database Models (from prisma/schema.prisma)
+
+- **`User`**: User accounts with role-based access
+- **`Property`**: Housing listings with details and location
+- **`Review`**: User reviews for properties
+- **`Amenity`**: Property features and facilities
+- **`Address`**: Property location information
+- **`LandlordProfile`**: Extended landlord information
+- **`University`**: University location data
+- **`Media`**: Property images and videos
+- **`TransportNode`**: Transportation points like tube stations
+
+### Authentication System
+
+- **`src/lib/authUtils.ts`**: JWT token handling
+- **`middleware.ts`**: Route protection and role-based access
+- **`src/context/AuthContext.tsx`**: Authentication state management
+- **`src/hooks/useAuth.tsx`**: Authentication hook for components
+
+### User Roles and Permissions
+
+#### Student Role
+- **Permission Level**: Basic
+- **Access**: Browse properties, save favorites, submit reviews
+- **Key Routes**: /, /search, /property/[id], /profile
+- **Protected Actions**: Adding reviews, saving favorites
+
+#### Landlord Role
+- **Permission Level**: Intermediate
+- **Access**: All student permissions + property management
+- **Key Routes**: /dashboard, /dashboard/properties, /dashboard/properties/new
+- **Protected Actions**: Property creation, editing, responding to reviews
+
+#### Admin Role
+- **Permission Level**: Advanced
+- **Access**: Full system access
+- **Key Routes**: /admin, /admin/users, /admin/properties, /admin/reviews
+- **Protected Actions**: User management, property verification, content moderation
+
+### Internationalization Structure
+
+- **`src/messages/`**: Translation files by language
+  - **`en.json`**: English translations
+  - **`fr.json`**: French translations
+  - **`ar.json`**: Arabic translations
+- **`src/i18n/`**: Configuration for language support
+- **`src/app/[locale]/`**: Locale-specific route groups
+
+### Docker Configuration
+
+- **`docker-compose.yml`**: Development environment
+  - Web service (Next.js application)
+  - PostgreSQL database
+- **`docker-compose.production.yml`**: Production setup
+  - Optimized build settings
+  - Volume persistence
+  - Health checks
+
+### Testing Structure
+
+- **`jest.config.js`**: Jest configuration
+- **`cypress.config.ts`**: Cypress configuration
+- **`__tests__/`**: Unit and integration tests
+- **`cypress/`**: End-to-end tests
+
+## User Roles
+
+- **Students**: Browse listings, write reviews, save favorites
+- **Landlords**: Create and manage property listings
+- **Admins**: Verify properties, manage users and content
 
 ## Environment Variables
 
-The following environment variables are required:
+- `DATABASE_URL`: Database connection string
+- `JWT_SECRET`: Secret for authentication tokens
+- `MAPBOX_API_KEY` (optional): For enhanced map features
 
-- `JWT_SECRET`: Secret key for JWT token generation
-- `DATABASE_URL`: Database connection string (SQLite by default)
-
-Optional variables:
-- `MAPBOX_API_KEY`: For map features (if using Mapbox)
-
-## Switching Between SQLite and PostgreSQL
-
-### To use SQLite (default):
-
-1. In `prisma/schema.prisma`:
-   ```prisma
-   datasource db {
-     provider = "sqlite"
-     // provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
-
-2. In `.env.local`:
-   ```
-   DATABASE_URL="file:./dev.db"
-   # DATABASE_URL="postgresql://postgres:postgres@localhost:5432/roomzoom?schema=public"
-   ```
-
-3. Run migrations and seed:
-   ```bash
-   npx prisma migrate reset
-   ```
-
-### To use PostgreSQL:
-
-1. In `prisma/schema.prisma`:
-   ```prisma
-   datasource db {
-     // provider = "sqlite"
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
-   ```
-
-2. In `.env.local`:
-   ```
-   # DATABASE_URL="file:./dev.db"
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/roomzoom?schema=public"
-   ```
-
-3. Start PostgreSQL (via Docker or local installation) and run migrations:
-   ```bash
-   npx prisma migrate reset
-   ```
-
-## Docker Container Management
-
-### Basic Commands
+## Docker Commands
 
 ```bash
-# Start the development environment
-docker-compose up -d
+# Development
+docker-compose up -d               # Start services
+docker-compose logs -f             # View logs
+docker-compose down                # Stop services
 
-# View logs
-docker-compose logs -f
-
-# Stop containers
-docker-compose down
-
-# Access the PostgreSQL database
-docker-compose exec postgres psql -U postgres -d roomzoom
-
-# Run Prisma Studio
-docker-compose exec web npx prisma studio
+# Production
+docker-compose -f docker-compose.production.yml up -d
+docker-compose -f docker-compose.production.yml down
 ```
 
-### Production Deployment
+## Running Tests
 
 ```bash
-# Start production containers
-docker-compose -f docker-compose.production.yml up -d
-
-# View production logs
-docker-compose -f docker-compose.production.yml logs -f
-
-# Stop production containers
-docker-compose -f docker-compose.production.yml down
-
-# Backup the database
-docker-compose -f docker-compose.production.yml exec postgres pg_dump -U postgres -d roomzoom > backup_$(date +%Y%m%d).sql
+npm test                           # Run Jest tests
+npm run cypress                    # Run Cypress E2E tests
 ```
 
 ## License

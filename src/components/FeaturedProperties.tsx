@@ -4,6 +4,13 @@ import { motion } from 'framer-motion';
 import PropertyCard from './PropertyCard';
 import { FaSpinner } from 'react-icons/fa';
 
+interface MediaItem {
+  id: string;
+  url: string;
+  type: string;
+  order?: number;
+}
+
 interface Property {
   id: string;
   title: string;
@@ -12,11 +19,15 @@ interface Property {
   tubeStation?: string;
   bedrooms: number;
   bathrooms: number;
-  images: string;
+  images?: string;
+  media?: MediaItem[];
   rating?: number;
   reviewCount?: number;
   available: Date;
   propertyType: string;
+  addressString?: string;
+  amenities?: any;
+  reviews?: any[];
 }
 
 export default function FeaturedProperties() {
@@ -30,7 +41,7 @@ export default function FeaturedProperties() {
         const response = await fetch('/api/properties?featured=true');
         if (!response.ok) throw new Error('Failed to fetch properties');
         const data = await response.json();
-        setProperties(data.slice(0, 3)); // Show only 3 featured properties
+        setProperties(data.properties?.slice(0, 3) || []); // Show only 3 featured properties with proper error handling
       } catch (err) {
         setError('Failed to load featured properties');
         console.error('Error:', err);
@@ -78,14 +89,19 @@ export default function FeaturedProperties() {
             id={property.id}
             title={property.title}
             price={property.price}
-            address={property.address}
+            address={property.addressString || property.address || ''}
             tubeStation={property.tubeStation}
             bedrooms={property.bedrooms}
             bathrooms={property.bathrooms}
-            imageUrl={[property.images]}
-            amenities={{}}
+            media={property.media}
+            imageUrl={
+              typeof property.images === 'string' 
+                ? [property.images] 
+                : undefined
+            }
+            amenities={property.amenities || {}}
             rating={property.rating}
-            reviewCount={property.reviewCount}
+            reviewCount={property.reviews?.length || 0}
             availableFrom={new Date(property.available)}
             propertyType={property.propertyType}
           />

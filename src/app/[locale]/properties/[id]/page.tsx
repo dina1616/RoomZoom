@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { BiArea, BiBed, BiBath, BiMap } from 'react-icons/bi';
@@ -9,6 +8,15 @@ import { FaUniversity } from 'react-icons/fa';
 import { MdChair } from 'react-icons/md';
 import { BsCalendarDate, BsHouse } from 'react-icons/bs';
 import dynamic from 'next/dynamic';
+import ImageComponent from '../../../../components/ImageComponent';
+
+// Media item interface
+interface MediaItem {
+  id: string;
+  url: string;
+  type: string;
+  order?: number | null;
+}
 
 // Updated Property type to match the actual API response
 type Property = {
@@ -22,7 +30,8 @@ type Property = {
   bathrooms: number;
   propertyType: string;
   available: Date | string;
-  images: string;
+  images?: string;
+  media?: MediaItem[];
   latitude: number;
   longitude: number;
   tubeStation?: string;
@@ -50,7 +59,24 @@ export default function PropertyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+
+  // Process property images
+  const imageUrls = useMemo(() => {
+    if (!property) return [];
+    
+    // Use media array if available
+    if (property.media && property.media.length > 0) {
+      return property.media.map(item => item.url);
+    }
+    
+    // Fallback to images string field if available
+    if (property.images) {
+      return [property.images];
+    }
+    
+    // Default fallback
+    return ['/images/placeholder-property.jpg'];
+  }, [property]);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -67,11 +93,6 @@ export default function PropertyDetail() {
         // Extract the property object from the response
         const propertyData = data.property;
         setProperty(propertyData);
-        
-        // Handle images - convert from string to array
-        if (propertyData.images) {
-          setImageUrls([propertyData.images]);
-        }
       } catch (err) {
         setError('Error loading property details. Please try again later.');
         console.error(err);
@@ -153,12 +174,12 @@ export default function PropertyDetail() {
           <div className="relative rounded-lg overflow-hidden h-[400px] bg-gray-100">
             {imageUrls.length > 0 ? (
               <>
-                <Image 
-                  src={imageUrls[currentImageIndex] || "/placeholder-property.jpg"} 
+                <ImageComponent 
+                  src={imageUrls[currentImageIndex]} 
                   alt={property.title}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  style={{ objectFit: 'cover' }}
+                  className="object-cover"
                   priority
                 />
                 {imageUrls.length > 1 && (

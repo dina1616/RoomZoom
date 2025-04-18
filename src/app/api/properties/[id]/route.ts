@@ -37,7 +37,19 @@ export async function GET(
                     include: {
                         user: { select: { id: true, name: true } }
                     }
-                }
+                },
+                media: {
+                    select: {
+                        id: true,
+                        url: true,
+                        type: true,
+                        order: true
+                    },
+                    orderBy: {
+                        order: 'asc'
+                    }
+                },
+                amenities: true
             },
         });
 

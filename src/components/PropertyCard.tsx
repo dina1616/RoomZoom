@@ -1,15 +1,23 @@
 'use client';
 
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
 import { FaHeart, FaRegHeart, FaBed, FaBath, FaSubway, FaWifi, FaWater } from 'react-icons/fa';
 import { MdLocalLaundryService, MdKitchen, MdPets } from 'react-icons/md';
+import ImageComponent from './ImageComponent';
 
 interface Amenity {
   icon: JSX.Element;
   label: string;
   available: boolean;
+}
+
+interface MediaItem {
+  id: string;
+  url: string;
+  type: string;
+  order?: number;
 }
 
 interface PropertyCardProps {
@@ -20,7 +28,8 @@ interface PropertyCardProps {
   tubeStation?: string;
   bedrooms: number;
   bathrooms: number;
-  imageUrl: string[];
+  imageUrl?: string[];
+  media?: MediaItem[];
   squareFootage?: number;
   amenities?: any;
   rating?: number;
@@ -40,6 +49,7 @@ export default function PropertyCard({
   bedrooms,
   bathrooms,
   imageUrl,
+  media,
   squareFootage,
   amenities = {},
   rating,
@@ -51,9 +61,24 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-
+  const [imgError, setImgError] = useState(false);
+  
+  // Process images from media array or fallback to imageUrl
+  const processedImages = useMemo(() => {
+    if (media && media.length > 0) {
+      return media.map(item => item.url);
+    } else if (imageUrl && imageUrl.length > 0 && imageUrl[0]) {
+      return imageUrl;
+    }
+    return ['/images/placeholder-property.jpg'];
+  }, [media, imageUrl]);
+  
   const hasAmenity = (name: string): boolean => {
-    return false;
+    if (!amenities || typeof amenities !== 'object') return false;
+    if (Array.isArray(amenities)) {
+      return amenities.some(a => a?.name === name);
+    }
+    return !!amenities[name];
   };
 
   const amenitiesList: Amenity[] = [
@@ -65,11 +90,11 @@ export default function PropertyCard({
   ];
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % imageUrl.length);
+    setCurrentImageIndex((prev) => (prev + 1) % processedImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + imageUrl.length) % imageUrl.length);
+    setCurrentImageIndex((prev) => (prev - 1 + processedImages.length) % processedImages.length);
   };
 
   return (
@@ -81,14 +106,16 @@ export default function PropertyCard({
       <div className="relative">
         {/* Image Carousel */}
         <div className="relative h-64 w-full">
-          <Image
-            src={imageUrl[currentImageIndex]}
+          <ImageComponent
+            src={processedImages[currentImageIndex]}
             alt={title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-300 hover:scale-105"
+            onError={() => setImgError(true)}
+            priority
           />
-          {isHovered && imageUrl.length > 1 && (
+          {isHovered && processedImages.length > 1 && !imgError && (
             <>
               <button
                 onClick={prevImage}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import ImageComponent from './ImageComponent';
 // Consider using a proper gallery library like react-image-gallery or similar
 
 interface MediaItem {
@@ -34,33 +35,35 @@ const PropertyImageGallery: React.FC<PropertyImageGalleryProps> = ({ media }) =>
         <div className="grid grid-cols-1 gap-4">
             {/* Main Image Display */}
             <div className="relative h-[400px] md:h-[500px] w-full bg-gray-100 rounded overflow-hidden">
-                {/* Basic img tag for now - use next/image for optimization */}
-                <img 
-                    src={currentImage.url} 
-                    alt={`Property Image ${selectedIndex + 1}`} 
-                    className="object-cover w-full h-full" 
+                <ImageComponent 
+                    src={currentImage.url}
+                    alt={`Property Image ${selectedIndex + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                    priority
                 />
-                {/* Add loading state? Error handling for broken images? */} 
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
-                <div className="flex space-x-2 overflow-x-auto p-1">
-                    {images.map((img, index) => (
-                        <button 
-                            key={img.id} 
-                            onClick={() => setSelectedIndex(index)} 
-                            className={`flex-shrink-0 w-20 h-16 rounded border-2 ${selectedIndex === index ? 'border-indigo-500' : 'border-transparent'} overflow-hidden`}
-                        >
-                            <img 
-                                src={img.url} 
-                                alt={`Thumbnail ${index + 1}`} 
-                                className="object-cover w-full h-full" 
-                            />
-                        </button>
-                    ))}
-                </div>
-            )}
+            <div className="flex space-x-2 overflow-x-auto p-1">
+                {images.map((img, index) => (
+                    <button 
+                        key={img.id} 
+                        onClick={() => setSelectedIndex(index)} 
+                        className={`flex-shrink-0 w-20 h-16 rounded border-2 ${selectedIndex === index ? 'border-indigo-500' : 'border-transparent'} overflow-hidden`}
+                    >
+                        <ImageComponent
+                            src={img.url}
+                            alt={`Thumbnail ${index + 1}`}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                            wrapperClassName="w-full h-full"
+                        />
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };

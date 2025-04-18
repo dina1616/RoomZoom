@@ -56,21 +56,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = await response.json();
         setUser(data.user);
       } else {
+        // User is not logged in - this is not an error, just a normal state
         setUser(null);
-        // Don't throw error here, just means user is not logged in
       }
     } catch (error) {
-      console.error("Failed to check auth status:", error);
+      // Only log serious errors, not 401s which are expected
+      if (!(error instanceof Response) || error.status !== 401) {
+        console.error("Failed to check auth status:", error);
+      }
       setUser(null); // Ensure user is null on error
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Check auth status when the provider mounts
+  // Check auth status when the provider mounts, with a small delay to avoid race conditions
   useEffect(() => {
-    checkAuthStatus();
+    const timeoutId = setTimeout(() => {
+      checkAuthStatus();
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
+
+  // If still loading, render a minimal placeholder
+  if (isLoading) {
+    return <div className="opacity-0">{children}</div>; // Invisible placeholder while loading
+  }
 
   return (
     <AuthContext.Provider value={{ 

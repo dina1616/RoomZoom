@@ -212,7 +212,19 @@ export async function GET(request: NextRequest) {
           select: { 
             rating: true 
           }
-        }
+        },
+        media: {
+          select: {
+            id: true,
+            url: true,
+            type: true,
+            order: true
+          },
+          orderBy: {
+            order: 'asc'
+          }
+        },
+        amenities: true
       },
       // TODO: Add pagination (take, skip)
       // TODO: Add sorting
@@ -232,7 +244,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(propertiesWithRating);
+    return NextResponse.json({ properties: propertiesWithRating });
   } catch (error) {
     console.error("Error fetching properties:", error);
     // Log the failing where clause for debugging
