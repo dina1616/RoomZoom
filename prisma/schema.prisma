@@ -8,24 +8,27 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(cuid())
-  email      String     @unique
-  name       String?
-  password   String
-  role       String     @default("STUDENT")
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  properties Property[] @relation("PropertyOwner")
-  reviews    Review[]
-  favorites  Property[] @relation("UserFavorites")
+  id               String           @id @default(cuid())
+  email            String           @unique
+  name             String?
+  password         String
+  role             String           @default("STUDENT")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  properties       Property[]       @relation("PropertyOwner")
+  reviews          Review[]
+  favorites        Property[]       @relation("UserFavorites")
+  landlordProfile  LandlordProfile?
 }
 
 model Property {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   title        String
   description  String
   price        Float
-  address      String
+  addressString String?   @map("address")
+  address      Address?   @relation(fields: [addressId], references: [id])
+  addressId    String?
   borough      String?
   latitude     Float
   longitude    Float
@@ -34,14 +37,17 @@ model Property {
   bedrooms     Int
   bathrooms    Int
   available    DateTime
-  images       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  images       String?
+  verified     Boolean?   @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   ownerId      String
   externalId   String?
-  owner        User     @relation("PropertyOwner", fields: [ownerId], references: [id])
+  owner        User       @relation("PropertyOwner", fields: [ownerId], references: [id])
   reviews      Review[]
-  favoritedBy  User[]   @relation("UserFavorites")
+  favoritedBy  User[]     @relation("UserFavorites")
+  amenities    Amenity[]  @relation("PropertyAmenities")
+  media        Media[]
 }
 
 model Review {
@@ -54,4 +60,66 @@ model Review {
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
+}
+
+model Amenity {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  properties Property[] @relation("PropertyAmenities")
+}
+
+model Address {
+  id         String     @id @default(cuid())
+  street     String
+  city       String
+  postalCode String
+  country    String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  properties Property[]
+}
+
+model LandlordProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  companyName String?
+  phoneNumber String
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model University {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  url        String
+  type       String
+  order      Int
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TransportNode {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("TUBE")
+  latitude  Float
+  longitude Float
+  lines     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
