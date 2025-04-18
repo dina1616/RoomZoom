@@ -72,7 +72,6 @@ const UpdatePropertySchema = z.object({
   title: z.string().min(5).optional(),
   description: z.string().min(10).optional(),
   price: z.number().positive().optional(),
-  address: z.string().min(5).optional(), // Changed from addressString to address
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   propertyType: z.string().min(1).optional(), 
@@ -81,7 +80,6 @@ const UpdatePropertySchema = z.object({
   available: z.string().datetime().optional(), 
   borough: z.string().optional().nullable(), // Allow null to clear optional string fields
   tubeStation: z.string().optional().nullable(),
-  // Media is now a string field
   images: z.string().optional(),
 });
 
@@ -118,7 +116,7 @@ export async function PATCH(
             updateData.available = new Date(updateData.available) as any; // Convert string to Date
         }
 
-        // 3. Update the property
+        // 3. Update the property - handle only direct property fields, not relations
         const updatedProperty = await prisma.property.update({
             where: { id: propertyId },
             data: updateData,
