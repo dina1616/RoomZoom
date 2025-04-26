@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from 'react-hot-toast';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -9,8 +10,11 @@ interface ClientProvidersProps {
 
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <AuthProvider>
-      {children}
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <Toaster position="top-center" />
+        {children}
+      </AuthProvider>
+    </>
   );
 } 

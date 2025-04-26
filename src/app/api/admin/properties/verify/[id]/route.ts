@@ -56,4 +56,32 @@ export async function PATCH(
     } finally {
         await prisma.$disconnect();
     }
+}
+
+// DELETE /api/admin/properties/verify/[id] - Reject/delete property
+export async function DELETE(
+    request: Request,
+    { params }: { params: { id: string } }
+) {
+    // Protect route: Check if user is admin
+    if (!(await isAdminUser(request))) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const propertyId = params.id;
+    if (!propertyId) {
+        return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
+    }
+
+    try {
+        // Delete the property (reject)
+        await prisma.property.delete({ where: { id: propertyId } });
+        console.log(`Property ${propertyId} rejected and deleted by admin.`);
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error(`Failed to reject property ${propertyId}:`, error);
+        return NextResponse.json({ error: 'Failed to reject property' }, { status: 500 });
+    } finally {
+        await prisma.$disconnect();
+    }
 } 

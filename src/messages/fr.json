@@ -7,5 +7,72 @@
   "filters": {
     "budget": "Budget",
     "amenities": "Équipements"
+  },
+  "Index": {
+    "title": "RoomZoom - Logement Étudiant à Londres"
+  },
+  "Navigation": {
+    "home": "Accueil",
+    "properties": "Propriétés",
+    "map": "Carte",
+    "about": "À Propos",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "dashboard": "Tableau de bord",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "admin": "Admin"
+  },
+  "Auth": {
+    "login": "Connexion",
+    "loginTitle": "Connexion",
+    "loginDescription": "Entrez vos identifiants pour accéder à votre compte",
+    "registerTitle": "S'inscrire",
+    "emailLabel": "Email",
+    "passwordLabel": "Mot de passe",
+    "nameLabel": "Nom complet",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "loginButton": "Se connecter",
+    "registerButton": "S'inscrire",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "registerNow": "S'inscrire maintenant",
+    "registerHere": "S'inscrire ici",
+    "loginNow": "Se connecter",
+    "loginSuccess": "Connexion réussie",
+    "registerSuccess": "Inscription réussie",
+    "errorMessage": "Une erreur s'est produite"
+  },
+  "Dashboard": {
+    "landlordDashboard": "Tableau de Bord Propriétaire",
+    "welcomeMessage": "Bienvenue, {name}",
+    "totalProperties": "Propriétés Totales",
+    "averageRent": "Loyer Moyen",
+    "viewsCount": "Vues Totales",
+    "inquiriesCount": "Demandes Totales",
+    "yourProperties": "Vos Propriétés",
+    "addProperty": "Ajouter une Propriété",
+    "noProperties": "Pas Encore de Propriétés",
+    "startAddingProperties": "Commencez à ajouter vos propriétés pour les présenter aux étudiants",
+    "addFirstProperty": "Ajouter Votre Première Propriété"
+  },
+  "Profile": {
+    "myProfile": "Mon Profil",
+    "welcomeMessage": "Bienvenue, {name}",
+    "personalInformation": "Informations Personnelles",
+    "email": "Email",
+    "name": "Nom",
+    "role": "Rôle",
+    "notProvided": "Non fourni",
+    "editProfile": "Modifier le Profil",
+    "myFavorites": "Mes Favoris",
+    "noFavorites": "Pas Encore de Favoris",
+    "startBrowsing": "Commencez à parcourir les propriétés et ajoutez-les à vos favoris",
+    "browseProperties": "Parcourir les Propriétés",
+    "myReviews": "Mes Avis",
+    "noReviews": "Pas Encore d'Avis",
+    "shareExperience": "Partagez votre expérience avec les propriétés que vous avez visitées ou habitées",
+    "pleaseLogin": "Veuillez vous connecter pour accéder à votre profil"
   }
 } 

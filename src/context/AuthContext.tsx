@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Define the shape of the user data we might store
 interface User {
@@ -29,7 +30,19 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading initially
+  const pathname = usePathname();
 
+  // Extract locale from the path
+  const getLocalePrefix = () => {
+    if (pathname) {
+      const parts = pathname.split('/');
+      if (parts.length > 1 && parts[1].length === 2) {
+        return `/${parts[1]}`;
+      }
+    }
+    return '';
+  };
+  
   const login = (userData: User) => {
     setUser(userData);
   };
@@ -38,11 +51,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     // Call the logout API endpoint to clear the server-side cookie
     try {
-       await fetch('/api/auth/logout', { method: 'POST' });
-       // Optionally redirect or refresh after logout
-       window.location.href = '/login'; // Simple redirect
+      await fetch('/api/auth/logout', { method: 'POST' });
+      // Redirect to login page with locale if available
+      const localePrefix = getLocalePrefix();
+      window.location.href = `${localePrefix}/login`;
     } catch (error) {
-        console.error("Logout failed:", error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -52,8 +66,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Assume an endpoint /api/auth/me verifies the cookie and returns user data
       const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+      
+      if (response.ok && data.isAuthenticated && data.user) {
         setUser(data.user);
       } else {
         // User is not logged in - this is not an error, just a normal state
@@ -61,9 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error) {
       // Only log serious errors, not 401s which are expected
-      if (!(error instanceof Response) || error.status !== 401) {
-        console.error("Failed to check auth status:", error);
-      }
+      console.error("Failed to check auth status:", error);
       setUser(null); // Ensure user is null on error
     } finally {
       setIsLoading(false);
@@ -79,19 +92,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // If still loading, render a minimal placeholder
-  if (isLoading) {
-    return <div className="opacity-0">{children}</div>; // Invisible placeholder while loading
-  }
-
+  // Always wrap children with AuthContext.Provider so useAuth is always within context
   return (
     <AuthContext.Provider value={{ 
-        user, 
-        isAuthenticated: !!user, 
-        isLoading, 
-        login, 
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
         logout,
-        checkAuthStatus 
+        checkAuthStatus
     }}>
       {children}
     </AuthContext.Provider>

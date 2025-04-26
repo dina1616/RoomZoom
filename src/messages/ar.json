@@ -1,11 +1,78 @@
 {
-  "greeting": "مرحبًا!",
+  "greeting": "مرحبا!",
   "search": {
-    "placeholder": "ابحث عن عقارات...",
+    "placeholder": "البحث عن العقارات...",
     "button": "بحث"
   },
   "filters": {
     "budget": "الميزانية",
-    "amenities": "وسائل الراحة"
+    "amenities": "المرافق"
+  },
+  "Index": {
+    "title": "رووم زووم - سكن الطلاب في لندن"
+  },
+  "Navigation": {
+    "home": "الرئيسية",
+    "properties": "العقارات",
+    "map": "الخريطة",
+    "about": "حول",
+    "login": "تسجيل الدخول",
+    "register": "التسجيل",
+    "dashboard": "لوحة التحكم",
+    "logout": "تسجيل الخروج",
+    "profile": "الملف الشخصي",
+    "admin": "المشرف"
+  },
+  "Auth": {
+    "login": "تسجيل الدخول",
+    "loginTitle": "تسجيل الدخول",
+    "loginDescription": "أدخل بيانات الاعتماد الخاصة بك للوصول إلى حسابك",
+    "registerTitle": "التسجيل",
+    "emailLabel": "البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "nameLabel": "الاسم الكامل",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "loginButton": "تسجيل الدخول",
+    "registerButton": "التسجيل",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "registerNow": "سجل الآن",
+    "registerHere": "سجل هنا",
+    "loginNow": "تسجيل الدخول",
+    "loginSuccess": "تم تسجيل الدخول بنجاح",
+    "registerSuccess": "تم التسجيل بنجاح",
+    "errorMessage": "حدث خطأ"
+  },
+  "Dashboard": {
+    "landlordDashboard": "لوحة تحكم المالك",
+    "welcomeMessage": "مرحبًا، {name}",
+    "totalProperties": "إجمالي العقارات",
+    "averageRent": "متوسط الإيجار",
+    "viewsCount": "إجمالي المشاهدات",
+    "inquiriesCount": "إجمالي الاستفسارات",
+    "yourProperties": "عقاراتك",
+    "addProperty": "إضافة عقار",
+    "noProperties": "لا توجد عقارات حتى الآن",
+    "startAddingProperties": "ابدأ بإضافة عقاراتك لعرضها للطلاب",
+    "addFirstProperty": "أضف أول عقار لك"
+  },
+  "Profile": {
+    "myProfile": "ملفي الشخصي",
+    "welcomeMessage": "مرحبًا، {name}",
+    "personalInformation": "المعلومات الشخصية",
+    "email": "البريد الإلكتروني",
+    "name": "الاسم",
+    "role": "الدور",
+    "notProvided": "غير متوفر",
+    "editProfile": "تعديل الملف الشخصي",
+    "myFavorites": "المفضلة",
+    "noFavorites": "لا توجد مفضلات حتى الآن",
+    "startBrowsing": "ابدأ بتصفح العقارات وأضفها إلى المفضلة",
+    "browseProperties": "تصفح العقارات",
+    "myReviews": "تقييماتي",
+    "noReviews": "لا توجد تقييمات حتى الآن",
+    "shareExperience": "شارك تجربتك مع العقارات التي زرتها أو عشت فيها",
+    "pleaseLogin": "يرجى تسجيل الدخول للوصول إلى ملفك الشخصي"
   }
 } 

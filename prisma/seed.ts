@@ -850,6 +850,86 @@ async function main() {
 
   console.log(`Seeded ${await prisma.property.count()} properties`);
 
+  // Add property stats for each property
+  for (const property of [prop1, prop2, prop3, prop4, prop5, prop6, prop7, prop8, prop9, prop10, prop11]) {
+    // Generate random stats for each property
+    const viewCount = Math.floor(Math.random() * 150) + 50; // 50-200 views
+    const inquiryCount = Math.floor(Math.random() * 20) + 5; // 5-25 inquiries
+    const favoriteCount = Math.floor(Math.random() * 15) + 3; // 3-18 favorites
+    
+    // Property stats are stored in the PropertyStat model
+    await prisma.$executeRaw`
+      INSERT INTO "PropertyStat" ("id", "propertyId", "viewCount", "inquiryCount", "favoriteCount", "lastViewed", "createdAt", "updatedAt")
+      VALUES (
+        ${crypto.randomUUID()}, 
+        ${property.id}, 
+        ${viewCount}, 
+        ${inquiryCount}, 
+        ${favoriteCount}, 
+        ${new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000))},
+        ${new Date()},
+        ${new Date()}
+      )
+    `;
+  }
+  
+  console.log(`Seeded property statistics records for ${[prop1, prop2, prop3, prop4, prop5, prop6, prop7, prop8, prop9, prop10, prop11].length} properties`);
+  
+  // Create sample inquiries for properties
+  const inquiryMessages = [
+    "I'm interested in viewing this property. Is it still available?",
+    "Could you please provide more information about the utilities included in the rent?",
+    "I'm a student at UCL. Is this property available for the next academic year?",
+    "Are pets allowed in this property? I have a small, well-behaved cat.",
+    "Is the security deposit equal to one month's rent?",
+    "Can you tell me more about the neighborhood and local amenities?",
+    "Is there high-speed internet available in the property?",
+    "I'd like to arrange a viewing for this weekend if possible.",
+    "Are the bills included in the monthly rent?",
+    "How far is the property from the nearest tube station?",
+  ];
+  
+  // Create inquiries for first few properties
+  for (const property of [prop1, prop2, prop3, prop4, prop5]) {
+    // Create 3-7 inquiries per property
+    const inquiryCount = Math.floor(Math.random() * 5) + 3;
+    
+    for (let i = 0; i < inquiryCount; i++) {
+      // Randomly select a student user
+      const studentUsers = [studentUser, internationalStudent, gradStudent, medStudent, csStudent, artStudent];
+      const randomUser = studentUsers[Math.floor(Math.random() * studentUsers.length)];
+      
+      // Randomly select a message
+      const randomMessage = inquiryMessages[Math.floor(Math.random() * inquiryMessages.length)];
+      
+      // Random status
+      const statusOptions = ["PENDING", "RESPONDED", "CLOSED"];
+      const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+      
+      // Random creation date within last 30 days
+      const createdAt = new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
+      
+      // Inquiries are stored in the Inquiry model
+      await prisma.$executeRaw`
+        INSERT INTO "Inquiry" ("id", "propertyId", "userId", "message", "email", "phone", "moveInDate", "status", "createdAt", "updatedAt")
+        VALUES (
+          ${crypto.randomUUID()},
+          ${property.id},
+          ${randomUser.id},
+          ${randomMessage},
+          ${randomUser.email},
+          ${"+44" + Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')},
+          ${new Date(Date.now() + Math.floor(Math.random() * 60 * 24 * 60 * 60 * 1000))},
+          ${randomStatus},
+          ${createdAt},
+          ${new Date(Math.max(createdAt.getTime(), Date.now() - Math.floor(Math.random() * 15 * 24 * 60 * 60 * 1000)))}
+        )
+      `;
+    }
+  }
+  
+  console.log(`Seeded property inquiries for ${[prop1, prop2, prop3, prop4, prop5].length} properties`);
+
   // Seed Reviews with more detailed feedback
   await prisma.review.create({
     data: {

@@ -1,13 +1,16 @@
 'use client';
 
+import React from 'react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaMapMarkedAlt, FaInfoCircle, FaSearch, FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Navbar() {
+  const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -93,28 +96,50 @@ export default function Navbar() {
             </div>
           </div>
           <div className="hidden md:flex md:items-center md:space-x-3">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href={`/${locale}/login`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
-              >
-                {t('login')}
-              </Link>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href={`/${locale}/register`}
-                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-md shadow-sm transition-all duration-200 hover:shadow"
-              >
-                {t('register')}
-              </Link>
-            </motion.div>
+            {isAuthenticated ? (
+              <>
+                {user?.role === 'LANDLORD' && (
+                  <Link href={`/${locale}/dashboard`} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                    {t('dashboard')}
+                  </Link>
+                )}
+                {user?.role === 'STUDENT' && (
+                  <Link href={`/${locale}/profile`} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                    {t('profile')}
+                  </Link>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link href={`/${locale}/admin`} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                    {t('admin')}
+                  </Link>
+                )}
+                <button onClick={logout} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                  {t('logout')}
+                </button>
+              </>
+            ) : (
+              <>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Link
+                    href={`/${locale}/login`}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                  >
+                    {t('login')}
+                  </Link>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link
+                    href={`/${locale}/register`}
+                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-md shadow-sm transition-all duration-200 hover:shadow"
+                  >
+                    {t('register')}
+                  </Link>
+                </motion.div>
+              </>
+            )}
           </div>
           <div className="flex md:hidden">
             <motion.button

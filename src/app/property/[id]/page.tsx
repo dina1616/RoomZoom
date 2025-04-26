@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client'; // Direct import might be needed 
 import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyMapView from '@/components/PropertyMapView';
 import ReviewSection from '@/components/ReviewSection';
+import SimilarProperties from '@/components/SimilarProperties';
 
 const prisma = new PrismaClient(); // Consider moving client instantiation to a lib file
 
@@ -196,6 +197,17 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
 
       {/* Review Section (Client Component) */}
       <ReviewSection id={id} initialReviews={property.reviews} />
+
+      {/* Similar Properties Recommendations */}
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold mb-4">Similar Properties</h2>
+        <SimilarProperties
+          currentPropertyId={id}
+          borough={property.borough}
+          propertyType={property.propertyType}
+          priceRange={[property.price * 0.75, property.price * 1.25]}
+        />
+      </section>
 
     </article>
   );

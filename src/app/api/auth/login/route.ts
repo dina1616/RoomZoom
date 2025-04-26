@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { comparePassword, generateToken } from '@/lib/authUtils';
 import { z } from 'zod';
 import { cookies } from 'next/headers'; // Import cookies
-
-const prisma = new PrismaClient();
 
 // Define validation schema using Zod
 const LoginSchema = z.object({

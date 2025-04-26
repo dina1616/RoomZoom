@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/authUtils';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 // Define validation schema using Zod
 const RegisterSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters long" }),
   name: z.string().optional(), // Name is optional
-  // role: z.enum(['STUDENT', 'LANDLORD']).optional().default('STUDENT') // Default role is STUDENT
+  role: z.enum(['STUDENT', 'LANDLORD']).optional().default('STUDENT') // Allow role selection
 });
 
 export async function POST(request: Request) {
@@ -26,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, name } = validation.data;
+    const { email, password, name, role = 'STUDENT' } = validation.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -49,7 +47,7 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         name: name,
-        role: 'STUDENT', // Default to STUDENT upon registration for now
+        role, // Use provided role (STUDENT or LANDLORD)
       },
       // Select only necessary fields to return (exclude password)
       select: {

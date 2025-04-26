@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { z } from 'zod';
 // Import ownership check helper
-import { checkPropertyOwnershipOrAdmin } from '@/lib/authUtils'; 
+import { checkPropertyOwnershipOrAdmin, getUserIdFromRequest } from '@/lib/authUtils'; 
 // Use the singleton Prisma client
 import prisma from '@/lib/prisma';
 
@@ -81,18 +81,19 @@ export async function GET(
 
 // Define Zod schema for updatable fields (make all optional for PATCH)
 const UpdatePropertySchema = z.object({
-  title: z.string().min(5).optional(),
-  description: z.string().min(10).optional(),
-  price: z.number().positive().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  propertyType: z.string().min(1).optional(), 
-  bedrooms: z.number().int().min(0).optional(),
-  bathrooms: z.number().int().min(1).optional(),
-  available: z.string().datetime().optional(), 
-  borough: z.string().optional().nullable(), // Allow null to clear optional string fields
-  tubeStation: z.string().optional().nullable(),
-  images: z.string().optional(),
+  title: z.string().min(5, { message: "Title must be at least 5 characters" }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
+  price: z.number().positive({ message: "Price must be a positive number" }),
+  addressString: z.string().min(5, { message: "Address is required" }), 
+  latitude: z.number(),
+  longitude: z.number(),
+  propertyType: z.string().min(1, { message: "Property type is required" }), 
+  bedrooms: z.number().int().min(0, { message: "Bedrooms cannot be negative" }),
+  bathrooms: z.number().int().min(1, { message: "Must have at least 1 bathroom" }),
+  available: z.string().datetime({ message: "Invalid availability date format" }), // Expect ISO string
+  // Optional fields
+  borough: z.string().optional(),
+  tubeStation: z.string().optional(),
 });
 
 export async function PATCH(
@@ -209,3 +210,123 @@ export async function DELETE(
 
 // NOTE: Consider adding PUT/DELETE handlers here later for property editing/deletion
 // Needs appropriate authorization checks (e.g., isOwner or isAdmin)
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+
+  // If prisma is not properly initialized, return error
+  if (!prisma) {
+    console.error("Database connection not available. Check DATABASE_URL environment variable.");
+    return NextResponse.json(
+      { error: "Database connection error. Please try again later." },
+      { status: 503 } // Service Unavailable
+    );
+  }
+
+  // 1. Check Authentication
+  const userId = await getUserIdFromRequest();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized: Must be logged in to update property' }, { status: 401 });
+  }
+
+  try {
+    // Check if the property exists and belongs to the user
+    const existingProperty = await prisma.property.findUnique({
+      where: { 
+        id,
+      },
+      select: { ownerId: true }
+    });
+    
+    if (!existingProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    
+    if (existingProperty.ownerId !== userId) {
+      return NextResponse.json({ error: 'You are not authorized to update this property' }, { status: 403 });
+    }
+
+    const body = await request.json();
+
+    // 2. Validate Input
+    const validation = UpdatePropertySchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const validatedData = validation.data;
+    
+    // Extract amenities from the request body
+    const { amenities, ...propertyData } = body;
+    
+    // 3. Update Property with properly linked amenities
+    const updatedProperty = await prisma.property.update({
+      where: { id },
+      data: {
+        ...propertyData,
+        available: new Date(validatedData.available), // Convert date string to Date object
+        
+        // Update amenities connections
+        amenities: amenities ? {
+          // Disconnect all existing connections
+          set: [],
+          // Connect newly selected amenities
+          connect: await getAmenityConnectionsFromObject(amenities)
+        } : undefined,
+      },
+      // Include necessary data in the response
+      include: {
+        owner: { select: { id: true, name: true }},
+        amenities: true,
+      }
+    });
+
+    return NextResponse.json({ property: updatedProperty }, { status: 200 });
+
+  } catch (error: unknown) {
+    console.error('Error updating property:', error);
+    return NextResponse.json(
+      { error: 'Failed to update property' },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper function to transform amenities object to database connections
+async function getAmenityConnectionsFromObject(amenities: Record<string, boolean>) {
+  // Get all available amenities from the database
+  const dbAmenities = await prisma.amenity.findMany();
+  
+  // Create a map of name to id for easy lookup
+  const amenityMap = dbAmenities.reduce((acc, amenity) => {
+    acc[amenity.name.toLowerCase()] = amenity.id;
+    return acc;
+  }, {} as Record<string, string>);
+  
+  // Get the IDs of the amenities that are set to true
+  const connections = Object.entries(amenities)
+    .filter(([_, value]) => value === true)
+    .map(([key]) => {
+      // Convert amenity key to match database naming (e.g., 'WiFi' to 'wifi')
+      const normalizedKey = key.toLowerCase();
+      
+      // Try to find the matching amenity ID
+      const amenityId = amenityMap[normalizedKey];
+      
+      // Return the ID if found, or log an error if not
+      if (amenityId) {
+        return { id: amenityId };
+      } else {
+        console.warn(`Amenity '${key}' not found in database`);
+        return null;
+      }
+    })
+    .filter(connection => connection !== null) as { id: string }[];
+  
+  return connections;
+}

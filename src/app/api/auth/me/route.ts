@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Get the token from the cookie
-    const token = cookies().get('authToken')?.value;
+    const token = cookies().get('auth_token')?.value;
     
     if (!token) {
       return NextResponse.json(
@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
 
     // Verify the token
     const secret = process.env.JWT_SECRET || 'fallback-secret-do-not-use-in-production';
-    const decoded = verify(token, secret) as { id: string };
+    const decoded = verify(token, secret) as { userId: string };
     
     // Get the user from the database
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
+      where: { id: decoded.userId },
       select: {
         id: true,
         email: true,
@@ -47,5 +47,7 @@ export async function GET(request: NextRequest) {
       { user: null, isAuthenticated: false, message: 'Authentication failed' },
       { status: 401 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 } 

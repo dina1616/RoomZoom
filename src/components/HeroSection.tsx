@@ -2,9 +2,17 @@
 
 import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import SearchBar from './SearchBar';
 
 export default function HeroSection() {
+  const { isAuthenticated, user } = useAuth();
+  const pathname = usePathname();
+  // Extract the current locale from pathname
+  const locale = pathname.split('/')[1] || 'en';
+  
   // Animated background effect with particles
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -189,23 +197,64 @@ export default function HeroSection() {
         </motion.div>
         
         <motion.div 
-          className="flex justify-center mt-10 space-x-4"
+          className="flex flex-wrap justify-center mt-10 gap-4"
           variants={itemVariants}
         >
-          <motion.button 
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Browse Properties
-          </motion.button>
-          <motion.button 
-            className="px-6 py-3 bg-transparent border-2 border-white text-white rounded-lg hover:bg-white hover:text-blue-800 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            How It Works
-          </motion.button>
+          <Link href={`/${locale}/properties`}>
+            <motion.button 
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Browse Properties
+            </motion.button>
+          </Link>
+          
+          <Link href={`#how-it-works`}>
+            <motion.button 
+              className="px-6 py-3 bg-transparent border-2 border-white text-white rounded-lg hover:bg-white hover:text-blue-800 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              How It Works
+            </motion.button>
+          </Link>
+          
+          {!isAuthenticated && (
+            <>
+              <Link href={`/${locale}/login`}>
+                <motion.button 
+                  className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Login
+                </motion.button>
+              </Link>
+              
+              <Link href={`/${locale}/register`}>
+                <motion.button 
+                  className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Register Now
+                </motion.button>
+              </Link>
+            </>
+          )}
+          
+          {isAuthenticated && (
+            <Link href={user?.role === 'LANDLORD' ? `/${locale}/dashboard` : `/${locale}/profile`}>
+              <motion.button 
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {user?.role === 'LANDLORD' ? 'My Dashboard' : 'My Profile'}
+              </motion.button>
+            </Link>
+          )}
         </motion.div>
         
         <motion.div 

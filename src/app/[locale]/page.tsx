@@ -1,4 +1,7 @@
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+// Remove framer-motion import from server component
+// import { motion } from 'framer-motion';
 
 // Dynamically import components to ensure proper client/server boundary
 const HeroSection = dynamic(() => import('@/components/HeroSection'));
@@ -6,8 +9,18 @@ const FeaturesSection = dynamic(() => import('@/components/FeaturesSection'));
 const HowItWorks = dynamic(() => import('@/components/HowItWorks'));
 const FeaturedProperties = dynamic(() => import('@/components/FeaturedProperties'));
 const Testimonials = dynamic(() => import('@/components/Testimonials'));
+// Import a new client component for the CTA section
+const CTASection = dynamic(() => import('@/components/CTASection'));
+// Dynamically import the MapComponent with no SSR to avoid hydration issues
+const MapComponent = dynamic(() => import('@/components/MapComponent'), { ssr: false });
 
-export default function Home() {
+interface HomeProps {
+  params: {
+    locale: string;
+  };
+}
+
+export default function Home({ params: { locale } }: HomeProps) {
   return (
     <div className="min-h-screen text-gray-800">
       {/* =========================
@@ -43,7 +56,7 @@ export default function Home() {
             from vibrant Camden to academic Bloomsbury.
           </p>
           <div className="h-[500px] rounded-lg overflow-hidden shadow-lg">
-            
+            <MapComponent zoom={12} center={[51.5074, -0.1278]} />
           </div>
         </div>
       </section>
@@ -106,30 +119,7 @@ export default function Home() {
       {/* =========================
           CTA Section
       ========================== */}
-      <section
-        className="py-20 bg-blue-600 text-white text-center"
-        aria-labelledby="cta-heading"
-      >
-        <div className="container mx-auto px-4">
-          <h2 id="cta-heading" className="text-3xl font-bold mb-6">
-            Ready to Find Your New Home?
-          </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of students who found their ideal London accommodation through
-            RoomZoom. With comprehensive property information and a focus on 
-            student-friendly locations, we help you discover the perfect spot 
-            that fits both your budget and lifestyle.
-          </p>
-          <button
-            className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold
-                       transition-colors duration-300 hover:bg-blue-50 hover:ring-4
-                       hover:ring-offset-2 hover:ring-blue-300"
-            aria-label="Get Started with RoomZoom"
-          >
-            Get Started
-          </button>
-        </div>
-      </section>
+      <CTASection locale={locale} />
     </div>
   );
 } 

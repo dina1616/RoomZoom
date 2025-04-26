@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 
 const SALT_ROUNDS = 10;
@@ -12,8 +12,6 @@ if (!JWT_SECRET) {
   // In production, you might want to throw an error or exit
   // throw new Error("FATAL ERROR: JWT_SECRET is not defined."); 
 }
-
-const prisma = new PrismaClient(); // Instantiate prisma client if needed within utils, or pass it
 
 /**
  * Hashes a plain text password.

@@ -19,35 +19,65 @@ model User {
   reviews          Review[]
   favorites        Property[]       @relation("UserFavorites")
   landlordProfile  LandlordProfile?
+  inquiries        Inquiry[]
 }
 
 model Property {
-  id           String     @id @default(cuid())
-  title        String
-  description  String
-  price        Float
-  addressString String?   @map("address")
-  address      Address?   @relation(fields: [addressId], references: [id])
-  addressId    String?
-  borough      String?
-  latitude     Float
-  longitude    Float
-  tubeStation  String?
-  propertyType String
-  bedrooms     Int
-  bathrooms    Int
-  available    DateTime
-  images       String?
-  verified     Boolean?   @default(false)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  ownerId      String
-  externalId   String?
-  owner        User       @relation("PropertyOwner", fields: [ownerId], references: [id])
-  reviews      Review[]
-  favoritedBy  User[]     @relation("UserFavorites")
-  amenities    Amenity[]  @relation("PropertyAmenities")
-  media        Media[]
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  price         Float
+  addressString String?         @map("address")
+  address       Address?        @relation(fields: [addressId], references: [id])
+  addressId     String?
+  borough       String?
+  latitude      Float
+  longitude     Float
+  tubeStation   String?
+  propertyType  String
+  bedrooms      Int
+  bathrooms     Int
+  available     DateTime
+  images        String?
+  verified      Boolean?        @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  ownerId       String
+  externalId    String?
+  owner         User            @relation("PropertyOwner", fields: [ownerId], references: [id])
+  reviews       Review[]
+  favoritedBy   User[]          @relation("UserFavorites")
+  amenities     Amenity[]       @relation("PropertyAmenities")
+  media         Media[]
+  stats         PropertyStat?
+  inquiries     Inquiry[]
+}
+
+model PropertyStat {
+  id           String   @id @default(cuid())
+  propertyId   String   @unique
+  property     Property @relation(fields: [propertyId], references: [id])
+  viewCount    Int      @default(0)
+  inquiryCount Int      @default(0)
+  favoriteCount Int     @default(0)
+  lastViewed   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Inquiry {
+  id           String   @id @default(cuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  message      String
+  phone        String?
+  email        String
+  moveInDate   DateTime?
+  status       String   @default("PENDING") // PENDING, RESPONDED, CLOSED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Review {

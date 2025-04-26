@@ -20,6 +20,9 @@ export default function MapPage() {
   const [priceFilter, setPriceFilter] = useState<[number, number]>([0, 5000]);
   const [bedroomFilter, setBedroomFilter] = useState<number | null>(null);
 
+  // London coordinates as default center
+  const londonCoordinates: [number, number] = [51.5074, -0.1278];
+
   return (
     <div className="h-[calc(100vh-64px)] bg-gray-50 flex flex-col">
       {/* Filter bar */}
@@ -80,7 +83,7 @@ export default function MapPage() {
 
       {/* Map container */}
       <div className="flex-grow">
-        <MapWithNoSSR />
+        <MapWithNoSSR center={londonCoordinates} zoom={12} />
       </div>
     </div>
   );

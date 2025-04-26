@@ -69,13 +69,25 @@ const ExampleImageUsage: React.FC = () => {
           <div>
             <p className="mb-2">Dynamic image URL:</p>
             <div className="relative h-64">
-              <Image {...dynamicImageProps} />
+              <Image 
+                src={dynamicImageProps.src || '/images/placeholder-property.jpg'} 
+                alt={dynamicImageProps.alt || 'Example image'} 
+                width={dynamicImageProps.width || 400}
+                height={dynamicImageProps.height || 300}
+                {...(dynamicImageProps as any)}
+              />
             </div>
           </div>
           <div>
             <p className="mb-2">Local image URL:</p>
             <div className="relative h-64">
-              <Image {...localImageProps} />
+              <Image 
+                src={localImageProps.src || '/images/placeholder-property.jpg'} 
+                alt={localImageProps.alt || 'Example image'} 
+                width={localImageProps.width || 400}
+                height={localImageProps.height || 300}
+                {...(localImageProps as any)}
+              />
             </div>
           </div>
         </div>

@@ -100,6 +100,26 @@ const CreatePropertySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  // Check if we're requesting amenities
+  const { searchParams } = new URL(request.url);
+  const amenitiesOnly = searchParams.get('amenitiesOnly');
+  
+  if (amenitiesOnly === 'true') {
+    try {
+      const amenities = await prisma.amenity.findMany({
+        orderBy: { name: 'asc' }
+      });
+      
+      return NextResponse.json({ amenities });
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch amenities' },
+        { status: 500 }
+      );
+    }
+  }
+  
   // If prisma is not properly initialized, return mock data or error
   if (!prisma) {
     console.error("Database connection not available. Check DATABASE_URL environment variable.");
@@ -113,8 +133,6 @@ export async function GET(request: NextRequest) {
       );
     }
   }
-
-  const { searchParams } = new URL(request.url);
 
   // Check if we're requesting featured properties
   const featuredParam = searchParams.get('featured');
@@ -198,36 +216,24 @@ export async function GET(request: NextRequest) {
   // Add logic for other filters (bedrooms, etc.)
   // if (bedroomsParam) { ... }
 
+  // Pagination and sorting params
+  const take = parseInt(searchParams.get('take') || '10', 10);
+  const skip = parseInt(searchParams.get('skip') || '0', 10);
+  const sortBy = searchParams.get('sortBy') || 'createdAt';
+  const sortOrder = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
+
   try {
     const properties = await prisma.property.findMany({
       where,
       include: {
-        owner: {
-          select: { 
-            id: true,
-            name: true,
-          }
-        },
-        reviews: {
-          select: { 
-            rating: true 
-          }
-        },
-        media: {
-          select: {
-            id: true,
-            url: true,
-            type: true,
-            order: true
-          },
-          orderBy: {
-            order: 'asc'
-          }
-        },
+        owner: { select: { id: true, name: true } },
+        reviews: { select: { rating: true } },
+        media: { select: { id: true, url: true, type: true, order: true }, orderBy: { order: 'asc' } },
         amenities: true
       },
-      // TODO: Add pagination (take, skip)
-      // TODO: Add sorting
+      take,
+      skip,
+      orderBy: { [sortBy]: sortOrder }
     });
 
     // Calculate average rating
@@ -281,10 +287,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized: Must be logged in to create property' }, { status: 401 });
   }
 
-  // Check if user is a landlord (or admin?) - Optional based on desired logic
-  // const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true }});
-  // if (user?.role !== 'LANDLORD' && user?.role !== 'ADMIN') { ... return 403 ... }
-
   try {
     const body = await request.json();
 
@@ -297,26 +299,28 @@ export async function POST(request: NextRequest) {
       );
     }
     const validatedData = validation.data;
-
-    // 3. Create Property
+    
+    // Extract amenities from the request body
+    const { amenities, ...propertyData } = body;
+    
+    // 3. Create Property with properly linked amenities
     const newProperty = await prisma.property.create({
       data: {
-        ...validatedData,
+        ...propertyData,
         available: new Date(validatedData.available), // Convert date string to Date object
         ownerId: userId, // Link to the authenticated user
-        verified: false, // New properties start as unverified (F-03)
-        // --- Simplified Address/Amenity/Media Handling (for now) ---
-        // Address: Assuming only addressString is provided for now.
-        //          A more robust solution would create/link an Address record.
-        // Amenities: Assuming no amenities passed initially. Landlord adds later?
-        //            Or expect array of amenity names/ids to connect.
-        // Media: Assuming no media passed initially. Landlord adds later?
-        //        Or expect array of URLs (placeholder until proper upload).
+        verified: false, // New properties start as unverified
+        
+        // Connect amenities if they exist in the database
+        // This will create connections for amenities that were toggled to true
+        amenities: amenities ? {
+          connect: await getAmenityConnectionsFromObject(amenities)
+        } : undefined,
       },
       // Include necessary data in the response
       include: {
-          owner: { select: { id: true, name: true }},
-          // include other relations if needed
+        owner: { select: { id: true, name: true }},
+        amenities: true,
       }
     });
 
@@ -332,4 +336,128 @@ export async function POST(request: NextRequest) {
     // Don't disconnect on each request
     // await prisma.$disconnect();
   }
+}
+
+export async function PUT(request: NextRequest) {
+  // If prisma is not properly initialized, return error
+  if (!prisma) {
+    console.error("Database connection not available. Check DATABASE_URL environment variable.");
+    return NextResponse.json(
+      { error: "Database connection error. Please try again later." },
+      { status: 503 } // Service Unavailable
+    );
+  }
+
+  // 1. Check Authentication
+  const userId = await getUserIdFromRequest();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized: Must be logged in to update property' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    
+    // Extract property ID from the URL path
+    const url = new URL(request.url);
+    const paths = url.pathname.split('/');
+    const propertyId = paths[paths.length - 1];
+    
+    if (!propertyId) {
+      return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
+    }
+    
+    // Check if the property exists and belongs to the user
+    const existingProperty = await prisma.property.findUnique({
+      where: { 
+        id: propertyId,
+      },
+      select: { ownerId: true }
+    });
+    
+    if (!existingProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+    
+    if (existingProperty.ownerId !== userId) {
+      return NextResponse.json({ error: 'You are not authorized to update this property' }, { status: 403 });
+    }
+
+    // 2. Validate Input
+    const validation = CreatePropertySchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const validatedData = validation.data;
+    
+    // Extract amenities from the request body
+    const { amenities, ...propertyData } = body;
+    
+    // 3. Update Property with properly linked amenities
+    const updatedProperty = await prisma.property.update({
+      where: { id: propertyId },
+      data: {
+        ...propertyData,
+        available: new Date(validatedData.available), // Convert date string to Date object
+        
+        // Update amenities connections
+        amenities: amenities ? {
+          // Disconnect all existing connections
+          set: [],
+          // Connect newly selected amenities
+          connect: await getAmenityConnectionsFromObject(amenities)
+        } : undefined,
+      },
+      // Include necessary data in the response
+      include: {
+        owner: { select: { id: true, name: true }},
+        amenities: true,
+      }
+    });
+
+    return NextResponse.json({ property: updatedProperty }, { status: 200 });
+
+  } catch (error: unknown) {
+    console.error('Error updating property:', error);
+    return NextResponse.json(
+      { error: 'Failed to update property' },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper function to transform amenities object to database connections
+async function getAmenityConnectionsFromObject(amenities: Record<string, boolean>) {
+  // Get all available amenities from the database
+  const dbAmenities = await prisma.amenity.findMany();
+  
+  // Create a map of name to id for easy lookup
+  const amenityMap = dbAmenities.reduce((acc, amenity) => {
+    acc[amenity.name.toLowerCase()] = amenity.id;
+    return acc;
+  }, {} as Record<string, string>);
+  
+  // Get the IDs of the amenities that are set to true
+  const connections = Object.entries(amenities)
+    .filter(([_, value]) => value === true)
+    .map(([key]) => {
+      // Convert amenity key to match database naming (e.g., 'WiFi' to 'wifi')
+      const normalizedKey = key.toLowerCase();
+      
+      // Try to find the matching amenity ID
+      const amenityId = amenityMap[normalizedKey];
+      
+      // Return the ID if found, or log an error if not
+      if (amenityId) {
+        return { id: amenityId };
+      } else {
+        console.warn(`Amenity '${key}' not found in database`);
+        return null;
+      }
+    })
+    .filter(connection => connection !== null) as { id: string }[];
+  
+  return connections;
 }

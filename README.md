@@ -113,6 +113,8 @@ rz/
 - **`src/app/[locale]/register/page.tsx`**: User registration page
 - **`src/app/[locale]/profile/page.tsx`**: User profile page
 - **`src/app/[locale]/dashboard/page.tsx`**: Landlord dashboard
+- **`src/app/[locale]/dashboard/add-property/page.tsx`**: Add new property form
+- **`src/app/[locale]/dashboard/edit-property/[id]/page.tsx`**: Edit existing property
 - **`src/app/[locale]/admin/page.tsx`**: Admin dashboard
 
 ### Core Components
@@ -125,6 +127,8 @@ rz/
 - **`src/components/ImageGallery.tsx`**: Property images display
 - **`src/components/Navbar.tsx`**: Main navigation component
 - **`src/components/AuthForms/`**: Authentication-related forms
+- **`src/components/PropertyForm.tsx`**: Form for creating and editing property listings
+- **`src/components/LoadingSpinner.tsx`**: Reusable loading spinner component
 
 ### API Structure
 
@@ -135,6 +139,8 @@ rz/
   - **`route.ts`**: List/create properties
   - **`[id]/route.ts`**: Get/update/delete specific property
   - **`verify/[id]/route.ts`**: Property verification
+- **`src/app/api/landlord/`**: Landlord-specific operations
+  - **`properties/route.ts`**: Landlord's property listings
 - **`src/app/api/reviews/`**: Review management
 - **`src/app/api/users/`**: User management
 - **`src/app/api/media/`**: Media file handling

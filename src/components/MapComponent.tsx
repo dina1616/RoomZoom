@@ -1,16 +1,8 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-
-// Fix default icon paths
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
 
 // Custom price marker icon creator
 const createPriceIcon = (price: number) => {
@@ -51,9 +43,11 @@ export interface Property {
 }
 
 interface MapComponentProps {
-  center?: [number, number];
-  zoom?: number;
-  properties?: Property[];
+  center: [number, number];
+  zoom: number;
+  markerPosition?: [number, number];
+  onMarkerChange?: (lat: number, lng: number) => void;
+  showControls?: boolean;
 }
 
 // Helper function to validate coordinates
@@ -140,80 +134,98 @@ function PropertiesLayer() {
   );
 }
 
-export default function MapComponent({ 
-  center = [51.5074, -0.1278], // London center
-  zoom = 12,
-  properties = []
-}: MapComponentProps) {
-  const [isClient, setIsClient] = useState(false);
+const MapComponent: React.FC<MapComponentProps> = ({
+  center,
+  zoom,
+  markerPosition,
+  onMarkerChange,
+  showControls = true,
+}) => {
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapReady, setMapReady] = useState(false);
 
+  // Fix for Leaflet icon issue in Next.js
   useEffect(() => {
-    setIsClient(true);
+    // Define the default icon URL and sizes
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+    });
   }, []);
 
-  if (!isClient) {
-    return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-500 animate-pulse">Loading map...</div>
-      </div>
-    );
-  }
+  // Initialize the map
+  useEffect(() => {
+    if (mapContainerRef.current && !mapRef.current) {
+      const map = L.map(mapContainerRef.current).setView(center, zoom);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
+      
+      mapRef.current = map;
+      setMapReady(true);
+      
+      // Cleanup function to unmount map
+      return () => {
+        map.remove();
+        mapRef.current = null;
+      };
+    }
+  }, [center, zoom]);
+  
+  // Add marker if map is ready
+  useEffect(() => {
+    if (mapReady && mapRef.current) {
+      // Initial position - either use provided marker position or center
+      const position = markerPosition || center;
+      
+      // Remove existing marker if it exists
+      if (markerRef.current) {
+        markerRef.current.remove();
+      }
+      
+      // Create new marker
+      const marker = L.marker(position, { draggable: showControls }).addTo(mapRef.current);
+      markerRef.current = marker;
+      
+      // Handle drag events if onMarkerChange callback is provided
+      if (onMarkerChange) {
+        marker.on('dragend', () => {
+          const newPosition = marker.getLatLng();
+          onMarkerChange(newPosition.lat, newPosition.lng);
+        });
+      }
+      
+      // Handle click events for positioning if showControls is true
+      if (showControls) {
+        mapRef.current.on('click', (e) => {
+          const { lat, lng } = e.latlng;
+          
+          if (markerRef.current) {
+            markerRef.current.setLatLng([lat, lng]);
+          }
+          
+          if (onMarkerChange) {
+            onMarkerChange(lat, lng);
+          }
+        });
+      }
+    }
+  }, [mapReady, center, markerPosition, onMarkerChange, showControls]);
+  
+  // Update view if center changes
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.setView(center, zoom);
+    }
+  }, [center, zoom]);
+  
+  return <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} />;
+};
 
-  return (
-    <div className="h-full w-full">
-      <MapContainer 
-        center={center} 
-        zoom={zoom} 
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {/* Display universities */}
-        {universities.map((uni, index) => (
-          isValidCoordinate(uni.lat, uni.lng) && (
-            <Marker 
-              key={`uni-${index}`} 
-              position={[uni.lat, uni.lng]}
-              icon={universityIcon}
-            >
-              <Popup>
-                <b>{uni.name}</b>
-              </Popup>
-            </Marker>
-          )
-        ))}
-
-        {/* Properties passed as props */}
-        {properties.map((property) => (
-          isValidCoordinate(property.latitude, property.longitude) && (
-            <Marker 
-              key={property.id}
-              position={[property.latitude, property.longitude]}
-              icon={createPriceIcon(property.price)}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <h3 className="font-bold">{property.title}</h3>
-                  <p className="text-blue-600 font-semibold">£{property.price}/month</p>
-                  <a 
-                    href={`/en/properties/${property.id}`} 
-                    className="text-blue-500 hover:underline mt-1 block"
-                  >
-                    View Details
-                  </a>
-                </div>
-              </Popup>
-            </Marker>
-          )
-        ))}
-
-        {/* Dynamically load properties */}
-        <PropertiesLayer />
-      </MapContainer>
-    </div>
-  );
-}
+export default MapComponent;
