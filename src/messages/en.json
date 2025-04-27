@@ -2,7 +2,17 @@
   "greeting": "Hello!",
   "search": {
     "placeholder": "Search properties...",
-    "button": "Search"
+    "button": "Search",
+    "properties": "Properties",
+    "searchingProperties": "Searching properties...",
+    "viewOnMap": "View on Map",
+    "noPropertiesFound": "No properties found",
+    "tryAdjustingFilters": "Try adjusting your filters to see more results",
+    "foundProperties": "Found {count} properties",
+    "location": "Location",
+    "priceRange": "Price Range",
+    "bedrooms": "Bedrooms",
+    "any": "Any"
   },
   "filters": {
     "filters": "Filters",
@@ -10,7 +20,6 @@
     "bedrooms": "Bedrooms",
     "amenities": "Amenities",
     "budget": "Budget",
-    "any": "Any",
     "reset": "Reset"
   },
   "Index": {
@@ -34,6 +43,7 @@
     "loginDescription": "Enter your credentials to access your account",
     "registerTitle": "Register",
     "register": "Register",
+    "registerDescription": "Create an account to begin your journey with us",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "nameLabel": "Full Name",
@@ -51,6 +61,7 @@
     "loginHere": "Login here",
     "loginSuccess": "Login successful",
     "registerSuccess": "Registration successful",
+    "registrationSuccess": "Registration successful! You can now log in with your credentials.",
     "errorMessage": "An error occurred",
     "studentRole": "Student",
     "landlordRole": "Landlord",

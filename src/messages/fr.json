@@ -2,7 +2,17 @@
   "greeting": "Bonjour !",
   "search": {
     "placeholder": "Rechercher des propriétés...",
-    "button": "Rechercher"
+    "button": "Rechercher",
+    "properties": "Propriétés",
+    "searchingProperties": "Recherche de propriétés...",
+    "viewOnMap": "Voir sur la carte",
+    "noPropertiesFound": "Aucune propriété trouvée",
+    "tryAdjustingFilters": "Essayez d'ajuster vos filtres pour voir plus de résultats",
+    "foundProperties": "Trouvé {count} propriétés",
+    "location": "Emplacement",
+    "priceRange": "Fourchette de prix",
+    "bedrooms": "Chambres",
+    "any": "Tous"
   },
   "filters": {
     "budget": "Budget",
@@ -28,6 +38,7 @@
     "loginTitle": "Connexion",
     "loginDescription": "Entrez vos identifiants pour accéder à votre compte",
     "registerTitle": "S'inscrire",
+    "registerDescription": "Créez un compte pour commencer votre parcours avec nous",
     "emailLabel": "Email",
     "passwordLabel": "Mot de passe",
     "nameLabel": "Nom complet",
@@ -42,6 +53,7 @@
     "loginNow": "Se connecter",
     "loginSuccess": "Connexion réussie",
     "registerSuccess": "Inscription réussie",
+    "registrationSuccess": "Inscription réussie ! Vous pouvez maintenant vous connecter avec vos identifiants.",
     "errorMessage": "Une erreur s'est produite"
   },
   "Dashboard": {

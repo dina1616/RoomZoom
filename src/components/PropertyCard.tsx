@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { FaHeart, FaRegHeart, FaBed, FaBath, FaSubway, FaWifi, FaWater } from 'react-icons/fa';
 import { MdLocalLaundryService, MdKitchen, MdPets } from 'react-icons/md';
 import ImageComponent from './ImageComponent';
+import { useParams } from 'next/navigation';
 
 interface Amenity {
   icon: JSX.Element;
@@ -39,6 +40,7 @@ interface PropertyCardProps {
   isFavorited?: boolean;
   onFavoriteToggle?: (id: string) => void;
   isLandlordView?: boolean;
+  property?: any;
 }
 
 export default function PropertyCard({
@@ -60,20 +62,38 @@ export default function PropertyCard({
   isFavorited = false,
   onFavoriteToggle,
   isLandlordView = false,
+  property,
 }: PropertyCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const params = useParams();
+  const locale = params.locale || 'en';
   
   // Process images from media array or fallback to imageUrl
   const processedImages = useMemo(() => {
+    // Debug the image data coming in
+    console.log('Media:', media);
+    console.log('ImageUrl:', imageUrl);
+    
     if (media && media.length > 0) {
       return media.map(item => item.url);
-    } else if (imageUrl && imageUrl.length > 0 && imageUrl[0]) {
+    } else if (imageUrl && imageUrl.length > 0 && typeof imageUrl[0] === 'string') {
       return imageUrl;
+    } else if (property?.images) {
+      // Handle the case where images is a string field (comma-separated or single URL)
+      const imagesField = property.images;
+      if (typeof imagesField === 'string') {
+        if (imagesField.includes(',')) {
+          return imagesField.split(',').map(url => url.trim());
+        }
+        return [imagesField];
+      }
     }
+    
+    // Use a valid placeholder image path
     return ['/images/placeholder-property.jpg'];
-  }, [media, imageUrl]);
+  }, [media, imageUrl, property?.images]);
   
   const hasAmenity = (name: string): boolean => {
     if (!amenities || typeof amenities !== 'object') return false;
@@ -153,7 +173,7 @@ export default function PropertyCard({
         </div>
       </div>
 
-      <Link href={`/property/${id}`}>
+      <Link href={`/${locale}/properties/${id}`}>
         <div className="p-5">
           {/* Title and Price */}
           <div className="mb-3">

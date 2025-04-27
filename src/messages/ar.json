@@ -2,7 +2,17 @@
   "greeting": "مرحبا!",
   "search": {
     "placeholder": "البحث عن العقارات...",
-    "button": "بحث"
+    "button": "بحث",
+    "properties": "العقارات",
+    "searchingProperties": "جاري البحث عن العقارات...",
+    "viewOnMap": "عرض على الخريطة",
+    "noPropertiesFound": "لم يتم العثور على عقارات",
+    "tryAdjustingFilters": "حاول تعديل المرشحات لرؤية المزيد من النتائج",
+    "foundProperties": "تم العثور على {count} عقار",
+    "location": "الموقع",
+    "priceRange": "نطاق السعر",
+    "bedrooms": "غرف النوم",
+    "any": "أي"
   },
   "filters": {
     "budget": "الميزانية",
@@ -28,6 +38,7 @@
     "loginTitle": "تسجيل الدخول",
     "loginDescription": "أدخل بيانات الاعتماد الخاصة بك للوصول إلى حسابك",
     "registerTitle": "التسجيل",
+    "registerDescription": "أنشئ حسابًا لبدء رحلتك معنا",
     "emailLabel": "البريد الإلكتروني",
     "passwordLabel": "كلمة المرور",
     "nameLabel": "الاسم الكامل",
@@ -42,6 +53,7 @@
     "loginNow": "تسجيل الدخول",
     "loginSuccess": "تم تسجيل الدخول بنجاح",
     "registerSuccess": "تم التسجيل بنجاح",
+    "registrationSuccess": "تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول باستخدام بيانات الاعتماد الخاصة بك",
     "errorMessage": "حدث خطأ"
   },
   "Dashboard": {

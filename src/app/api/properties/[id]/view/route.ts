@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 /**
  * POST /api/properties/[id]/view
@@ -34,44 +35,34 @@ export async function POST(
     }
     
     // Check if stats exist for this property
-    const statCount = await prisma.$executeRaw`
-      SELECT COUNT(*) FROM "PropertyStat" WHERE "propertyId" = ${propertyId}
-    `;
+    const existingStat = await prisma.propertyStat.findFirst({
+      where: { propertyId }
+    });
     
-    if (statCount > 0) {
+    if (existingStat) {
       // Update existing stats
-      await prisma.$executeRaw`
-        UPDATE "PropertyStat" 
-        SET 
-          "viewCount" = "viewCount" + 1,
-          "lastViewed" = ${new Date()},
-          "updatedAt" = ${new Date()}
-        WHERE "propertyId" = ${propertyId}
-      `;
+      await prisma.propertyStat.update({
+        where: { id: existingStat.id },
+        data: {
+          viewCount: { increment: 1 },
+          lastViewed: new Date(),
+          updatedAt: new Date()
+        }
+      });
     } else {
       // Create stats if they don't exist
-      await prisma.$executeRaw`
-        INSERT INTO "PropertyStat" (
-          "id", 
-          "propertyId", 
-          "viewCount", 
-          "inquiryCount", 
-          "favoriteCount", 
-          "lastViewed", 
-          "createdAt", 
-          "updatedAt"
-        )
-        VALUES (
-          ${crypto.randomUUID()}, 
-          ${propertyId}, 
-          1, 
-          0, 
-          0, 
-          ${new Date()},
-          ${new Date()},
-          ${new Date()}
-        )
-      `;
+      await prisma.propertyStat.create({
+        data: {
+          id: randomUUID(),
+          propertyId,
+          viewCount: 1,
+          inquiryCount: 0,
+          favoriteCount: 0,
+          lastViewed: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
     }
     
     return NextResponse.json({ success: true });

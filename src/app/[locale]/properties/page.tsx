@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyCardSkeleton from '@/components/PropertyCardSkeleton';
 import SearchFilters from '@/components/SearchFilters';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaArrowDown } from 'react-icons/fa';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
@@ -35,46 +35,91 @@ export default function PropertiesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  const PROPERTIES_PER_PAGE = 30; // Increase to show more properties initially
 
-  useEffect(() => {
-    const fetchProperties = async () => {
+  const fetchProperties = async (isLoadMore = false) => {
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
       setIsLoading(true);
-      setError(null);
+    }
+    setError(null);
+    
+    try {
+      // Build the URL with all search parameters
+      const queryParams = new URLSearchParams();
       
-      try {
-        // Build the URL with all search parameters
-        const queryParams = new URLSearchParams();
-        
-        // Add all existing search params to the query
-        for (const [key, value] of searchParams.entries()) {
-          queryParams.append(key, value);
-        }
-        
-        const response = await fetch(`/api/properties?${queryParams.toString()}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch properties');
-        }
-        
-        const data = await response.json();
-        
-        // Convert availableFrom strings to Date objects
-        const propertiesWithDates = data.map((property: any) => ({
-          ...property,
-          availableFrom: new Date(property.availableFrom)
-        }));
-        
+      // Add all existing search params to the query
+      for (const [key, value] of searchParams.entries()) {
+        queryParams.append(key, value);
+      }
+      
+      // Add pagination parameters
+      queryParams.append('take', PROPERTIES_PER_PAGE.toString());
+      if (isLoadMore) {
+        queryParams.append('skip', ((page - 1) * PROPERTIES_PER_PAGE).toString());
+      }
+      
+      const response = await fetch(`/api/properties?${queryParams.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch properties');
+      }
+      
+      const data = await response.json();
+      
+      // Check if data is an array
+      const propertiesArray = Array.isArray(data) ? data : 
+                             (data.properties && Array.isArray(data.properties)) ? data.properties : [];
+      
+      // Convert availableFrom strings to Date objects
+      const propertiesWithDates = propertiesArray.map((property: any) => ({
+        ...property,
+        availableFrom: property.availableFrom ? new Date(property.availableFrom) : new Date()
+      }));
+      
+      if (isLoadMore) {
+        setProperties(prev => [...prev, ...propertiesWithDates]);
+        // If we got fewer properties than requested, there are no more
+        setHasMore(propertiesWithDates.length === PROPERTIES_PER_PAGE);
+      } else {
         setProperties(propertiesWithDates);
-      } catch (err: any) {
-        console.error('Error fetching properties:', err);
-        setError(err.message);
-      } finally {
+        // Reset hasMore when doing a fresh load
+        setHasMore(propertiesWithDates.length === PROPERTIES_PER_PAGE);
+      }
+    } catch (err: any) {
+      console.error('Error fetching properties:', err);
+      setError(err.message);
+    } finally {
+      if (isLoadMore) {
+        setIsLoadingMore(false);
+      } else {
         setIsLoading(false);
       }
-    };
-    
+    }
+  };
+
+  // Load more properties
+  const loadMoreProperties = () => {
+    setPage(prev => prev + 1);
+  };
+
+  // Initial load
+  useEffect(() => {
+    setPage(1); // Reset page when search params change
     fetchProperties();
   }, [searchParams]);
+
+  // Load more when page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchProperties(true);
+    }
+  }, [page]);
 
   // Prepare initial filters from URL search params
   const initialFilters = {
@@ -155,18 +200,42 @@ export default function PropertiesPage() {
           <p className="text-blue-600 mb-4">{t('tryAdjustingFilters')}</p>
         </div>
       ) : (
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {properties.map((property) => (
-            <motion.div key={property.id} variants={itemVariants}>
-              <PropertyCard {...property} />
-            </motion.div>
-          ))}
-        </motion.div>
+        <div>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {properties.map((property) => (
+              <motion.div key={property.id} variants={itemVariants}>
+                <PropertyCard {...property} />
+              </motion.div>
+            ))}
+          </motion.div>
+          
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={loadMoreProperties}
+                disabled={isLoadingMore}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-md"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <span className="animate-spin h-5 w-5 mr-2 border-t-2 border-b-2 border-white rounded-full" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <FaArrowDown className="mr-2" />
+                    Load More Properties
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

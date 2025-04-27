@@ -62,6 +62,11 @@ interface MapOverlayData {
   transportNodes: TransportNode[];
 }
 
+// API Response Types
+interface PropertyResponse {
+  properties: FetchedProperty[];
+}
+
 // Dynamically import MapPane
 const DynamicMapPane = dynamic(() => import('@/components/MapPane'), {
   ssr: false,
@@ -107,10 +112,12 @@ export default function SearchPage() {
           console.error("Failed to fetch map overlays, proceeding without them.");
         }
 
-        const propData: FetchedProperty[] = await propResponse.json(); 
-        const overlayData: MapOverlayData = overlayResponse.ok ? await overlayResponse.json() : { universities: [], transportNodes: [] };
+        const propData = await propResponse.json();
+        const overlayData = overlayResponse.ok ? await overlayResponse.json() : { universities: [], transportNodes: [] };
         
-        setProperties(propData);
+        // Fix: Correctly access the properties array from the response
+        const propertyList = propData.properties || [];
+        setProperties(propertyList);
         setMapOverlays(overlayData);
 
       } catch (e: any) {

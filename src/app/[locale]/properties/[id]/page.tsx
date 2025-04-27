@@ -66,15 +66,27 @@ export default function PropertyDetail() {
     
     // Use media array if available
     if (property.media && property.media.length > 0) {
+      console.log('Using media array:', property.media);
       return property.media.map(item => item.url);
     }
     
-    // Fallback to images string field if available
-    if (property.images) {
+    // Fallback to images array if available
+    if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+      console.log('Using images array:', property.images);
+      return property.images;
+    }
+    
+    // Fallback to single image string field if available
+    if (property.images && typeof property.images === 'string') {
+      console.log('Using images string:', property.images);
+      if (property.images.includes(',')) {
+        return property.images.split(',').map(url => url.trim());
+      }
       return [property.images];
     }
     
     // Default fallback
+    console.log('Using placeholder image');
     return ['/images/placeholder-property.jpg'];
   }, [property]);
 

@@ -36,18 +36,18 @@ interface TransportNode {
 // Fix for default icon issue with webpack
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default,
-    iconUrl: require('leaflet/dist/images/marker-icon.png').default,
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default,
+    iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+    iconUrl: '/leaflet/marker-icon.png',
+    shadowUrl: '/leaflet/marker-shadow.png',
 });
 
 // --- Define Custom Icons (Basic Examples) ---
 
 // Default property icon (standard blue marker)
 const defaultIcon = L.icon({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-    iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+    iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+    iconUrl: '/leaflet/marker-icon.png',
+    shadowUrl: '/leaflet/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],

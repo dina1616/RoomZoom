@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaMapMarkerAlt, FaPoundSign, FaBed } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { MdExpandMore } from 'react-icons/md';
+import { useTranslations } from 'next-intl';
 
 // Predefined options
 const locations = [
@@ -40,6 +41,8 @@ const bedroomOptions = [
 
 export default function SearchBar() {
   const router = useRouter();
+  const params = useParams();
+  const t = useTranslations('search');
   const [location, setLocation] = useState('');
   const [priceRange, setPriceRange] = useState('');
   const [bedrooms, setBedrooms] = useState('');
@@ -99,10 +102,13 @@ export default function SearchBar() {
       searchParams.append('bedrooms', bedrooms);
     }
     
+    // Get the locale from params or default to 'en'
+    const locale = params.locale || 'en';
+    
     // Navigate to properties page with filters
     setTimeout(() => {
       setIsSearching(false);
-      router.push(`/properties?${searchParams.toString()}`);
+      router.push(`/${locale}/properties?${searchParams.toString()}`);
     }, 500);
   };
 
@@ -162,7 +168,7 @@ export default function SearchBar() {
               <div className="flex items-center">
                 <FaMapMarkerAlt className="text-blue-600 mr-2" />
                 <span className={location ? "text-gray-800" : "text-gray-400"}>
-                  {location || "Location"}
+                  {location || t('location')}
                 </span>
               </div>
               <MdExpandMore className={`text-gray-400 transition-transform duration-300 ${showLocationDropdown ? 'rotate-180' : ''}`} />
@@ -208,7 +214,7 @@ export default function SearchBar() {
               <div className="flex items-center">
                 <FaPoundSign className="text-green-600 mr-2" />
                 <span className={priceRange ? "text-gray-800" : "text-gray-400"}>
-                  {priceRange ? priceRanges.find(range => range.value === priceRange)?.label : "Price Range"}
+                  {priceRange ? priceRanges.find(range => range.value === priceRange)?.label : t('priceRange')}
                 </span>
               </div>
               <MdExpandMore className={`text-gray-400 transition-transform duration-300 ${showPriceDropdown ? 'rotate-180' : ''}`} />
@@ -254,7 +260,7 @@ export default function SearchBar() {
               <div className="flex items-center">
                 <FaBed className="text-purple-600 mr-2" />
                 <span className={bedrooms ? "text-gray-800" : "text-gray-400"}>
-                  {bedrooms ? `${bedrooms === 'any' ? 'Any' : bedrooms + '+'} Bedrooms` : "Bedrooms"}
+                  {bedrooms ? `${bedrooms === 'any' ? t('any') : bedrooms + '+'} ${t('bedrooms')}` : t('bedrooms')}
                 </span>
               </div>
               <MdExpandMore className={`text-gray-400 transition-transform duration-300 ${showBedroomDropdown ? 'rotate-180' : ''}`} />
@@ -280,7 +286,7 @@ export default function SearchBar() {
                         bedrooms === item.value ? 'bg-blue-100 text-purple-700' : 'text-gray-800'
                       }`}
                     >
-                      {item.label} Bedrooms
+                      {item.label} {t('bedrooms')}
                     </div>
                   ))}
                 </motion.div>
@@ -304,7 +310,7 @@ export default function SearchBar() {
             ) : (
               <FaSearch className="mr-2" />
             )}
-            <span>Search</span>
+            <span>{t('button')}</span>
           </motion.button>
         </div>
       </div>

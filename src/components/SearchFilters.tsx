@@ -8,7 +8,7 @@ import { IoWifiSharp } from 'react-icons/io5';
 import { GiWashingMachine, GiCctvCamera } from 'react-icons/gi';
 import { TbAirConditioning } from 'react-icons/tb';
 import { BsFillDoorOpenFill } from 'react-icons/bs';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 
 interface AmenityOption {
   id: string;
@@ -38,6 +38,7 @@ interface SearchFiltersProps {
 export default function SearchFilters({ initialFilters = {}, className = '' }: SearchFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams();
   
   // Filter states
   const [propertyType, setPropertyType] = useState(initialFilters.propertyType || '');
@@ -89,23 +90,26 @@ export default function SearchFilters({ initialFilters = {}, className = '' }: S
 
   // Apply filters
   const applyFilters = () => {
-    const params = new URLSearchParams();
+    const searchParams = new URLSearchParams();
     
-    if (propertyType) params.append('propertyType', propertyType);
-    if (minBedrooms) params.append('minBedrooms', minBedrooms);
-    if (maxBedrooms) params.append('maxBedrooms', maxBedrooms);
-    if (minBathrooms) params.append('minBathrooms', minBathrooms);
-    if (maxBathrooms) params.append('maxBathrooms', maxBathrooms);
-    if (minPrice) params.append('minPrice', minPrice);
-    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (propertyType) searchParams.append('propertyType', propertyType);
+    if (minBedrooms) searchParams.append('minBedrooms', minBedrooms);
+    if (maxBedrooms) searchParams.append('maxBedrooms', maxBedrooms);
+    if (minBathrooms) searchParams.append('minBathrooms', minBathrooms);
+    if (maxBathrooms) searchParams.append('maxBathrooms', maxBathrooms);
+    if (minPrice) searchParams.append('minPrice', minPrice);
+    if (maxPrice) searchParams.append('maxPrice', maxPrice);
     
     if (selectedAmenities.length > 0) {
       selectedAmenities.forEach(amenity => {
-        params.append('amenities', amenity);
+        searchParams.append('amenities', amenity);
       });
     }
     
-    router.push(`${pathname}?${params.toString()}`);
+    // Keep the current pathname but append the search parameters
+    const locale = params.locale || 'en';
+    const basePath = `/${locale}/properties`;
+    router.push(`${basePath}?${searchParams.toString()}`);
     setIsFilterVisible(false);
   };
 
@@ -120,7 +124,9 @@ export default function SearchFilters({ initialFilters = {}, className = '' }: S
     setMaxPrice('');
     setSelectedAmenities([]);
     
-    router.push(pathname);
+    // Keep the current pathname without any search parameters
+    const locale = params.locale || 'en';
+    router.push(`/${locale}/properties`);
     setIsFilterVisible(false);
   };
 

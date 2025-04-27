@@ -9,6 +9,25 @@ import { useTranslations } from 'next-intl';
 import { formatCurrency } from '@/lib/utils';
 import { PropertyWithDetails as Property } from '@/types/property';
 
+// Fix Leaflet's default icon
+// This needs to be done before any Leaflet Marker is created
+// These imports are no longer needed since we're using static paths
+// import marker from 'leaflet/dist/images/marker-icon.png';
+// import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
+// import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix the default icon paths for Leaflet - required for Next.js
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: '/leaflet/marker-icon.png',
+  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
+  shadowUrl: '/leaflet/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 // Create a styled price marker that scales with price
 const createPriceIcon = (price: number) => {
   // Scale icon size based on price
@@ -309,6 +328,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
   const t = useTranslations('Map');
   const mapRef = useRef(null);
+  const params = useParams();
   
   // Track if this is the initial render
   const isFirstRender = useRef(true);
@@ -572,12 +592,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     </div>
                   )}
                   <div className="mt-2">
-                    <a 
-                      href={`/properties/${property.id}`} 
+                    <Link 
+                      href={`/${params.locale || 'en'}/properties/${property.id}`} 
                       className="text-xs font-medium text-blue-600 hover:text-blue-800"
                     >
                       {t('viewProperty')}
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </Popup>

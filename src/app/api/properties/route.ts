@@ -243,10 +243,21 @@ export async function GET(request: NextRequest) {
         ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
         : null;
       
+      // Process and transform media for easier consumption in the frontend
+      const processedMedia = property.media && property.media.length > 0
+        ? property.media
+        : [];
+      
+      // Generate an image array from media for backwards compatibility
+      const images = processedMedia.length > 0
+        ? processedMedia.map((item: any) => item.url)
+        : ['/images/placeholder-property.jpg'];
+      
       return {
         ...property,
         rating: avgRating,
-        reviewCount: ratings.length
+        reviewCount: ratings.length,
+        images: images
       };
     });
 

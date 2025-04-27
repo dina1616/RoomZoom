@@ -1,7 +1,7 @@
 'use client';
 
-import Image, { ImageProps } from 'next/image';
-import React from 'react';
+import Image, { ImageProps, StaticImageData } from 'next/image';
+import React, { useState, useEffect } from 'react';
 import getImgProps, { ImageSource } from '../utils/get-img-props';
 
 interface ImageComponentProps extends Omit<ImageProps, 'src'> {
@@ -21,19 +21,41 @@ const ImageComponent: React.FC<ImageComponentProps> = ({
   wrapperClassName = '',
   ...props
 }) => {
-  const [error, setError] = React.useState(false);
+  const [error, setError] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | StaticImageData>(
+    typeof src === 'string' ? src : (src as any)?.src || fallbackSrc
+  );
+  
+  useEffect(() => {
+    // Reset error state when src changes
+    setError(false);
+    
+    // Update imageSrc when src changes
+    if (typeof src === 'string') {
+      setImageSrc(src);
+    } else if ((src as any)?.src) {
+      setImageSrc((src as any).src);
+    }
+  }, [src]);
+  
+  // When error occurs, switch to fallback
+  useEffect(() => {
+    if (error) {
+      setImageSrc(fallbackSrc);
+    }
+  }, [error, fallbackSrc]);
+  
+  // Normalize the image path to ensure it works
+  const normalizedSrc = typeof imageSrc === 'string' && !imageSrc.startsWith('http') && !imageSrc.startsWith('/')
+    ? `/${imageSrc}`
+    : imageSrc;
   
   // Get the appropriate image props based on the src type
   const imageProps = getImgProps({
-    src: error ? fallbackSrc : src,
+    src: normalizedSrc,
     alt,
     props,
   });
-
-  // Ensure we always have a valid src for the Image component
-  if (!imageProps.src) {
-    imageProps.src = fallbackSrc;
-  }
 
   return (
     <div className={`relative ${wrapperClassName}`}>

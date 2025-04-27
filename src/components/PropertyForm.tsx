@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import { PropertyAmenities } from '@/types/property';
@@ -101,6 +101,7 @@ interface PropertyFormProps {
 
 const PropertyForm: React.FC<PropertyFormProps> = ({ onSuccess, propertyId }) => {
   const router = useRouter();
+  const params = useParams();
   const isEditing = !!propertyId;
 
   // Form state
@@ -269,6 +270,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSuccess, propertyId }) =>
         throw new Error(data.error || 'Failed to save property');
       }
       
+      // Get the locale from params or default to 'en'
+      const locale = params.locale || 'en';
+      
       // Show success message
       toast.success(isEditing ? 'Property updated successfully!' : 'Property created successfully!');
       
@@ -276,8 +280,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ onSuccess, propertyId }) =>
       if (onSuccess) {
         onSuccess();
       } else {
-        // Redirect to property page or dashboard
-        router.push(isEditing ? `/properties/${propertyId}` : '/dashboard');
+        // Redirect to property page or dashboard with locale
+        router.push(isEditing 
+          ? `/${locale}/properties/${propertyId}` 
+          : `/${locale}/dashboard`);
       }
       
     } catch (err: any) {
