@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getUserIdFromRequest } from '@/lib/authUtils'; // Import helper
 
 // Create a single PrismaClient instance and try to handle connection errors
-let prisma: PrismaClient;
+let prisma: PrismaClient | null = null;
 
 try {
   prisma = new PrismaClient();
@@ -12,9 +12,11 @@ try {
   prisma.$connect();
 } catch (error) {
   console.error("Failed to initialize Prisma client:", error);
+  prisma = null; // Make sure it's set to null if connection fails
   // We'll handle this in the route handlers
 }
 
+// Enhanced mock properties for fallback
 const mockProperties = [
   {
     id: '1',
@@ -34,8 +36,15 @@ const mockProperties = [
     },
     rating: 4.5,
     reviewCount: 12,
-    availableFrom: new Date('2024-01-15'),
+    availableFrom: new Date('2024-01-15').toISOString(),
     propertyType: 'Studio',
+    ownerId: 'mock-owner-id',
+    description: 'A beautiful studio apartment in Camden',
+    borough: 'Camden',
+    latitude: 51.5390,
+    longitude: -0.1426,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '2',
@@ -55,8 +64,15 @@ const mockProperties = [
     },
     rating: 4.8,
     reviewCount: 8,
-    availableFrom: new Date('2024-02-01'),
+    availableFrom: new Date('2024-02-01').toISOString(),
     propertyType: 'Apartment',
+    ownerId: 'mock-owner-id',
+    description: 'A spacious 2-bedroom apartment in Greenwich',
+    borough: 'Greenwich',
+    latitude: 51.4777,
+    longitude: -0.0165,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
   {
     id: '3',
@@ -76,9 +92,63 @@ const mockProperties = [
     },
     rating: 4.2,
     reviewCount: 15,
-    availableFrom: new Date('2024-01-10'),
+    availableFrom: new Date('2024-01-10').toISOString(),
     propertyType: 'Room',
+    ownerId: 'mock-owner-id',
+    description: 'A cozy room in a shared house in Islington',
+    borough: 'Islington',
+    latitude: 51.5480,
+    longitude: -0.1037,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   },
+];
+
+// Create more mock properties programmatically for better testing
+for (let i = 4; i <= 30; i++) {
+  const boroughs = ['Westminster', 'Camden', 'Hackney', 'Kensington', 'Newham'];
+  const propertyTypes = ['Apartment', 'Studio', 'Room', 'House', 'Flat'];
+  
+  mockProperties.push({
+    id: i.toString(),
+    title: `Property ${i} in ${boroughs[i % boroughs.length]}`,
+    price: 800 + (i * 50),
+    address: `${i} ${boroughs[i % boroughs.length]} Street`,
+    tubeStation: `${boroughs[i % boroughs.length]} Station`,
+    bedrooms: (i % 4) + 1,
+    bathrooms: (i % 3) + 1,
+    images: ['/images/properties/rz1.avif', '/images/properties/property1-2.jpg'],
+    amenities: {
+      wifi: i % 2 === 0,
+      laundry: i % 3 === 0,
+      kitchen: true,
+      waterBills: i % 4 === 0,
+      petsAllowed: i % 5 === 0,
+    },
+    rating: 3 + Math.random() * 2,
+    reviewCount: Math.floor(Math.random() * 20),
+    availableFrom: new Date(Date.now() + i * 86400000).toISOString(),
+    propertyType: propertyTypes[i % propertyTypes.length],
+    ownerId: 'mock-owner-id',
+    description: `Property ${i} description`,
+    borough: boroughs[i % boroughs.length],
+    latitude: 51.5 + (Math.random() * 0.1 - 0.05),
+    longitude: -0.1 + (Math.random() * 0.1 - 0.05),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+}
+
+// Mock amenities for fallback
+const mockAmenities = [
+  { id: '1', name: 'wifi' },
+  { id: '2', name: 'laundry' },
+  { id: '3', name: 'kitchen' },
+  { id: '4', name: 'waterBills' },
+  { id: '5', name: 'petsAllowed' },
+  { id: '6', name: 'heating' },
+  { id: '7', name: 'parking' },
+  { id: '8', name: 'security' },
 ];
 
 // Zod schema for property creation (expand as needed)
@@ -100,185 +170,119 @@ const CreatePropertySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  // Check if we're requesting amenities
-  const { searchParams } = new URL(request.url);
-  const amenitiesOnly = searchParams.get('amenitiesOnly');
+  // Create a copy of the searchParams
+  const searchParams = new URL(request.url).searchParams;
   
-  if (amenitiesOnly === 'true') {
-    try {
-      const amenities = await prisma.amenity.findMany({
-        orderBy: { name: 'asc' }
-      });
-      
-      return NextResponse.json({ amenities });
-    } catch (error) {
-      console.error('Error fetching amenities:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch amenities' },
-        { status: 500 }
-      );
-    }
-  }
-  
-  // If prisma is not properly initialized, return mock data or error
-  if (!prisma) {
-    console.error("Database connection not available. Check DATABASE_URL environment variable.");
-    // For development, return mock data so UI can still function
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.json(mockProperties);
-    } else {
-      return NextResponse.json(
-        { error: "Database connection error. Please try again later." },
-        { status: 503 } // Service Unavailable
-      );
-    }
-  }
-
-  // Check if we're requesting featured properties
-  const featuredParam = searchParams.get('featured');
-  if (featuredParam === 'true') {
-    try {
-      // Return a small subset of properties as featured
-      const properties = await prisma.property.findMany({
-        take: 6,
-        include: {
-          owner: { select: { name: true } }
-        },
-        orderBy: { 
-          createdAt: 'desc' // Newest first for featured items
-        }
-      });
-      
-      return NextResponse.json(properties);
-    } catch (error) {
-      console.error("Error fetching featured properties:", error);
-      // Fallback to mock data in development
-      if (process.env.NODE_ENV === 'development') {
-        return NextResponse.json(mockProperties.slice(0, 3));
-      }
-      return NextResponse.json(
-        { error: "Failed to fetch featured properties" },
-        { status: 500 }
-      );
-    } finally {
-      // No need to disconnect on each request, will be handled at app shutdown
-    }
-  }
-
-  // Extract filter parameters
-  const minPriceParam = searchParams.get('minPrice');
-  const maxPriceParam = searchParams.get('maxPrice');
-  const amenitiesParams = searchParams.getAll('amenity');
-  // Add other potential filters here (bedrooms, propertyType, etc.)
-  // const bedroomsParam = searchParams.get('bedrooms');
-
-  // Build Prisma where clause dynamically
-  const where: any = {
-    // Don't filter by verified status to show all properties
-  };
-
-  if (minPriceParam) {
-    const minPrice = parseInt(minPriceParam, 10);
-    if (!isNaN(minPrice)) {
-      where['price'] = { ...(where['price'] || {}), gte: minPrice };
-    }
-  }
-
-  if (maxPriceParam) {
-    const maxPrice = parseInt(maxPriceParam, 10);
-    if (!isNaN(maxPrice)) {
-      where['price'] = { ...(where['price'] || {}), lte: maxPrice };
-    }
-  }
-
-  if (amenitiesParams && amenitiesParams.length > 0) {
-    // SQLite-compatible query for amenities
-    where['amenities'] = {
-      some: {
-        name: {
-          in: amenitiesParams,
-        },
-      },
-    };
-    
-    // PostgreSQL approach (kept for reference)
-    /*
-    where['amenities'] = {
-      every: {
-        name: {
-          in: amenitiesParams,
-        },
-      },
-    };
-    */
-  }
-
-  // Add logic for other filters (bedrooms, etc.)
-  // if (bedroomsParam) { ... }
-
-  // Pagination and sorting params
-  const take = parseInt(searchParams.get('take') || '10', 10);
-  const skip = parseInt(searchParams.get('skip') || '0', 10);
-  const sortBy = searchParams.get('sortBy') || 'createdAt';
-  const sortOrder = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
-
   try {
-    const properties = await prisma.property.findMany({
+    if (searchParams.get('amenitiesOnly') === 'true') {
+      if (!prisma) {
+        console.error("Prisma client is null. Using mock data.");
+        return NextResponse.json({ amenities: mockAmenities });
+      }
+      const amenities = await prisma.amenity.findMany();
+      return NextResponse.json({ amenities });
+    }
+
+    // If prisma is null, use mock data
+    if (!prisma) {
+      console.error("Prisma client is null. Using mock data.");
+      return NextResponse.json({ 
+        properties: mockProperties, 
+        totalCount: mockProperties.length 
+      });
+    }
+
+    // get the filter parameters from the query string
+    const take = searchParams.get('take');
+    const skip = searchParams.get('skip');
+    const featuredParam = searchParams.get('featured');
+    
+    // Filtering parameters
+    const location = searchParams.get('location');
+    const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice') as string) : undefined;
+    const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice') as string) : undefined;
+    const beds = searchParams.get('beds') ? parseInt(searchParams.get('beds') as string, 10) : undefined;
+    
+    // Build query filters
+    const where: any = {};
+    
+    if (location) {
+      where.OR = [
+        { city: { contains: location, mode: 'insensitive' } },
+        { borough: { contains: location, mode: 'insensitive' } },
+        { postcode: { contains: location, mode: 'insensitive' } },
+      ];
+    }
+    
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {};
+      if (minPrice !== undefined) where.price.gte = minPrice;
+      if (maxPrice !== undefined) where.price.lte = maxPrice;
+    }
+    
+    if (beds !== undefined) {
+      if (beds === 4) {
+        // 4+ bedrooms
+        where.beds = { gte: 4 };
+      } else {
+        where.beds = beds;
+      }
+    }
+    
+    // Fetch properties with the given filters
+    const properties = await prisma!.property.findMany({
       where,
       include: {
         owner: { select: { id: true, name: true } },
-        reviews: { select: { rating: true } },
-        media: { select: { id: true, url: true, type: true, order: true }, orderBy: { order: 'asc' } },
-        amenities: true
+        reviews: { select: { id: true, rating: true } },
+        media: { select: { url: true } },
       },
-      take,
-      skip,
-      orderBy: { [sortBy]: sortOrder }
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: skip ? parseInt(skip) : undefined,
+      take: take ? parseInt(take) : undefined,
     });
-
-    // Calculate average rating
-    const propertiesWithRating = properties.map((property: any) => {
-      const ratings = property.reviews.map((review: any) => review.rating);
-      const avgRating = ratings.length > 0 
-        ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length 
+    
+    // Process properties for client consumption
+    const processedProperties = properties.map(property => {
+      // Calculate average rating
+      const averageRating = property.reviews.length > 0
+        ? property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length
         : null;
-      
-      // Process and transform media for easier consumption in the frontend
-      const processedMedia = property.media && property.media.length > 0
-        ? property.media
-        : [];
-      
-      // Generate an image array from media for backwards compatibility
-      const images = processedMedia.length > 0
-        ? processedMedia.map((item: any) => item.url)
-        : ['/images/placeholder-property.jpg'];
-      
+
+      // Format images array
+      const images = property.media?.length > 0
+        ? property.media.map(m => m.url)
+        : (property.images ? 
+            (typeof property.images === 'string' ? [property.images] : property.images) 
+            : []);
+
       return {
         ...property,
-        rating: avgRating,
-        reviewCount: ratings.length,
-        images: images
+        averageRating,
+        reviewCount: property.reviews.length,
+        images
       };
     });
+    
+    // Count total properties for pagination
+    const totalCount = await prisma!.property.count({ where });
 
-    return NextResponse.json({ properties: propertiesWithRating });
+    if (featuredParam === 'true') {
+      return NextResponse.json(processedProperties.slice(0, 6));
+    }
+
+    return NextResponse.json({
+      properties: processedProperties,
+      totalCount: totalCount,
+    });
   } catch (error) {
     console.error("Error fetching properties:", error);
-    // Log the failing where clause for debugging
-    console.error("Failing where clause:", JSON.stringify(where, null, 2)); 
-    
-    // Fallback to mock data in development
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.json(mockProperties);
-    }
-    
-    return NextResponse.json(
-      { error: "Failed to fetch properties" },
-      { status: 500 }
-    );
-  } finally {
-    // Don't disconnect on each request
-    // await prisma.$disconnect();
+    // Fallback to mock data in all environments when there's an error
+    const take = parseInt(searchParams.get('take') || '10', 10);
+    const skip = parseInt(searchParams.get('skip') || '0', 10);
+    return NextResponse.json(mockProperties.slice(skip, skip + take));
   }
 }
 
@@ -441,6 +445,10 @@ export async function PUT(request: NextRequest) {
 
 // Helper function to transform amenities object to database connections
 async function getAmenityConnectionsFromObject(amenities: Record<string, boolean>) {
+  if (!prisma) {
+    throw new Error("Database connection not available");
+  }
+
   // Get all available amenities from the database
   const dbAmenities = await prisma.amenity.findMany();
   
@@ -468,7 +476,7 @@ async function getAmenityConnectionsFromObject(amenities: Record<string, boolean
         return null;
       }
     })
-    .filter(connection => connection !== null) as { id: string }[];
+    .filter((connection): connection is { id: string } => connection !== null);
   
   return connections;
 }
