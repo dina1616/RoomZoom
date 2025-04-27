@@ -20,16 +20,16 @@ interface PropertyStat {
   viewCount: number;
   inquiryCount: number;
   favoriteCount: number;
-  lastViewed: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  lastViewed: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 interface PropertyInquiry {
   id: string;
   propertyId: string;
   status: string;
-  createdAt: Date;
+  createdAt: Date | string;
 }
 
 export async function GET(request: NextRequest) {
@@ -55,37 +55,40 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Initialize empty arrays for stats and inquiries
-    const propertyStats: PropertyStat[] = [];
-    const inquiries: PropertyInquiry[] = [];
-    
-    // Only fetch stats and inquiries if we have properties
-    if (properties.length > 0) {
-      const propertyIds = properties.map(prop => prop.id);
-      
-      // Get property stats using the direct model
-      try {
-        const results = await prisma.$queryRaw`
-          SELECT * FROM "PropertyStat" 
-          WHERE "propertyId" IN (${Prisma.join(propertyIds)})
-        `;
-        propertyStats.push(...(results as PropertyStat[]));
-      } catch (error) {
-        console.error('Error fetching property stats:', error);
-      }
-      
-      // Fetch inquiries separately
-      try {
-        const results = await prisma.$queryRaw`
-          SELECT id, "propertyId", status, "createdAt"
-          FROM "Inquiry"
-          WHERE "propertyId" IN (${Prisma.join(propertyIds)})
-        `;
-        inquiries.push(...(results as PropertyInquiry[]));
-      } catch (error) {
-        console.error('Error fetching inquiries:', error);
-      }
+    // Check if properties exist before proceeding
+    if (!properties || properties.length === 0) {
+      return NextResponse.json({ 
+        properties: [], 
+        viewsCount: 0,
+        inquiriesCount: 0
+      });
     }
+
+    const propertyIds = properties.map(prop => prop.id);
+    
+    // Get property stats using the Prisma model directly instead of raw SQL
+    const propertyStats = await prisma.propertyStat.findMany({
+      where: {
+        propertyId: {
+          in: propertyIds
+        }
+      }
+    });
+    
+    // Fetch inquiries with Prisma model instead of raw SQL
+    const inquiries = await prisma.inquiry.findMany({
+      where: {
+        propertyId: {
+          in: propertyIds
+        }
+      },
+      select: {
+        id: true,
+        propertyId: true,
+        status: true,
+        createdAt: true
+      }
+    });
     
     // Group inquiries by property ID
     const inquiriesByProperty: Record<string, PropertyInquiry[]> = {};
@@ -99,7 +102,7 @@ export async function GET(request: NextRequest) {
     // Group stats by property ID
     const statsByProperty: Record<string, PropertyStat> = {};
     propertyStats.forEach(stat => {
-      statsByProperty[stat.propertyId] = stat;
+      statsByProperty[stat.propertyId] = stat as PropertyStat;
     });
     
     // Combine the data
@@ -154,7 +157,16 @@ export async function POST(request: NextRequest) {
           ...propertyValues,
           ownerId: userId,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          // Create the stats for this property in the same operation 
+          stats: {
+            create: {
+              viewCount: 0,
+              inquiryCount: 0,
+              favoriteCount: 0,
+              lastViewed: new Date()
+            }
+          }
         }
       });
       
@@ -186,17 +198,6 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-      
-      // Create initial property stats
-      await tx.propertyStat.create({
-        data: {
-          propertyId: property.id,
-          viewCount: 0,
-          inquiryCount: 0,
-          favoriteCount: 0,
-          lastViewed: new Date()
-        }
-      });
       
       // Return the created property with relations
       return await tx.property.findUnique({

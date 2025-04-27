@@ -7,7 +7,25 @@ import Link from 'next/link';
 
 // --- Register Form Component ---
 
-const RegisterForm: React.FC = () => {
+interface RegisterFormLabels {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  student?: string;
+  landlord?: string;
+  studentDescription?: string;
+  landlordDescription?: string;
+  register?: string;
+  registering?: string;
+}
+
+interface RegisterFormProps {
+  customLabels?: RegisterFormLabels;
+  onSuccess?: () => void;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ customLabels, onSuccess }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,9 +60,14 @@ const RegisterForm: React.FC = () => {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Registration successful, redirect to login with locale if available
-      const loginPath = locale ? `/${locale}/login?registered=true` : '/login?registered=true';
-      router.push(loginPath); 
+      // If onSuccess callback is provided, use it
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Otherwise use default behavior
+        const loginPath = locale ? `/${locale}/login?registered=true` : '/login?registered=true';
+        router.push(loginPath);
+      }
 
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration.');
@@ -53,11 +76,25 @@ const RegisterForm: React.FC = () => {
     }
   };
 
+  // Use custom labels if provided, otherwise fallback to defaults
+  const labels = {
+    name: customLabels?.name || "Name (Optional)",
+    email: customLabels?.email || "Email",
+    password: customLabels?.password || "Password",
+    confirmPassword: customLabels?.confirmPassword || "Confirm Password",
+    student: customLabels?.student || "Student",
+    landlord: customLabels?.landlord || "Landlord",
+    studentDescription: customLabels?.studentDescription || "Register as a student to browse and favorite properties.",
+    landlordDescription: customLabels?.landlordDescription || "Register as a landlord to list your properties.",
+    register: customLabels?.register || "Register",
+    registering: customLabels?.registering || "Registering..."
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4" aria-label="Registration Form">
       {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name (Optional)</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">{labels.name}</label>
         <input
           id="name"
           type="text"
@@ -68,7 +105,7 @@ const RegisterForm: React.FC = () => {
         />
       </div>
       <div>
-        <label htmlFor="email-register" className="block text-sm font-medium text-gray-700">Email</label>
+        <label htmlFor="email-register" className="block text-sm font-medium text-gray-700">{labels.email}</label>
         <input
           id="email-register"
           type="email"
@@ -81,7 +118,7 @@ const RegisterForm: React.FC = () => {
         />
       </div>
       <div>
-        <label htmlFor="password-register" className="block text-sm font-medium text-gray-700">Password</label>
+        <label htmlFor="password-register" className="block text-sm font-medium text-gray-700">{labels.password}</label>
         <input
           id="password-register"
           type="password"
@@ -96,7 +133,7 @@ const RegisterForm: React.FC = () => {
         />
       </div>
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">{labels.confirmPassword}</label>
         <input
           id="confirmPassword"
           type="password"
@@ -120,7 +157,7 @@ const RegisterForm: React.FC = () => {
                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
             }`}
           >
-            Student
+            {labels.student}
           </button>
           <button 
             type="button" 
@@ -131,13 +168,11 @@ const RegisterForm: React.FC = () => {
                 : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
             }`}
           >
-            Landlord
+            {labels.landlord}
           </button>
         </div>
         <p className="mt-1 text-xs text-gray-500">
-          {role === 'STUDENT' 
-            ? 'Register as a student to browse and favorite properties.' 
-            : 'Register as a landlord to list your properties.'}
+          {role === 'STUDENT' ? labels.studentDescription : labels.landlordDescription}
         </p>
       </div>
       <button 
@@ -147,7 +182,7 @@ const RegisterForm: React.FC = () => {
         aria-live="polite"
         aria-busy={isLoading}
       >
-        {isLoading ? 'Registering...' : 'Register'}
+        {isLoading ? labels.registering : labels.register}
       </button>
     </form>
   );
@@ -155,7 +190,20 @@ const RegisterForm: React.FC = () => {
 
 // --- Login Form Component ---
 
-const LoginForm: React.FC = () => {
+interface LoginFormLabels {
+  email?: string;
+  password?: string;
+  login?: string;
+  loggingIn?: string;
+  errorMessage?: string;
+}
+
+interface LoginFormProps {
+  customLabels?: LoginFormLabels;
+  onSuccess?: (user: any) => void;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ customLabels, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +212,15 @@ const LoginForm: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const locale = params?.locale as string || '';
+
+  // Use custom labels if provided, otherwise fallback to defaults
+  const labels = {
+    email: customLabels?.email || "Email",
+    password: customLabels?.password || "Password",
+    login: customLabels?.login || "Login",
+    loggingIn: customLabels?.loggingIn || "Logging in...",
+    errorMessage: customLabels?.errorMessage || "An error occurred during login."
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,20 +246,25 @@ const LoginForm: React.FC = () => {
       // Check authentication status to ensure context is updated
       await checkAuthStatus();
       
-      // Redirect based on role with locale if available
-      const { role } = data.user;
-      const basePath = locale ? `/${locale}` : '';
-      
-      if (role === 'LANDLORD') {
-        router.push(`${basePath}/dashboard`);
-      } else if (role === 'ADMIN') {
-        router.push(`${basePath}/admin`);
+      // Use onSuccess if provided
+      if (onSuccess) {
+        onSuccess(data.user);
       } else {
-        router.push(`${basePath}/profile`);
+        // Default redirection based on role with locale if available
+        const { role } = data.user;
+        const basePath = locale ? `/${locale}` : '';
+        
+        if (role === 'LANDLORD') {
+          router.push(`${basePath}/dashboard`);
+        } else if (role === 'ADMIN') {
+          router.push(`${basePath}/admin`);
+        } else {
+          router.push(`${basePath}/profile`);
+        }
       }
 
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login.');
+      setError(err.message || labels.errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +274,7 @@ const LoginForm: React.FC = () => {
     <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login Form">
       {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
       <div>
-        <label htmlFor="email-login" className="block text-sm font-medium text-gray-700">Email</label>
+        <label htmlFor="email-login" className="block text-sm font-medium text-gray-700">{labels.email}</label>
         <input
           id="email-login"
           type="email"
@@ -225,7 +287,7 @@ const LoginForm: React.FC = () => {
         />
       </div>
       <div>
-        <label htmlFor="password-login" className="block text-sm font-medium text-gray-700">Password</label>
+        <label htmlFor="password-login" className="block text-sm font-medium text-gray-700">{labels.password}</label>
         <input
           id="password-login"
           type="password"
@@ -244,7 +306,7 @@ const LoginForm: React.FC = () => {
         aria-live="polite"
         aria-busy={isLoading}
       >
-        {isLoading ? 'Logging in...' : 'Login'}
+        {isLoading ? labels.loggingIn : labels.login}
       </button>
     </form>
   );

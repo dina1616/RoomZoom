@@ -96,4 +96,16 @@ export interface PropertyWithDetails {
   averageRating: number | undefined;
   reviewCount: number;
   amenities: PropertyAmenities;
+  stats?: PropertyStat;
+}
+
+export interface PropertyStat {
+  id: string;
+  propertyId: string;
+  viewCount: number;
+  inquiryCount: number;
+  favoriteCount: number;
+  lastViewed: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 } 

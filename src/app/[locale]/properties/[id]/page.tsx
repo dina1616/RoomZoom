@@ -93,6 +93,9 @@ export default function PropertyDetail() {
         // Extract the property object from the response
         const propertyData = data.property;
         setProperty(propertyData);
+
+        // Track the property view
+        trackPropertyView(propertyData.id);
       } catch (err) {
         setError('Error loading property details. Please try again later.');
         console.error(err);
@@ -105,6 +108,23 @@ export default function PropertyDetail() {
       fetchProperty();
     }
   }, [id]);
+
+  // Function to track property view
+  const trackPropertyView = async (propertyId: string) => {
+    try {
+      // Call the view tracking API
+      await fetch(`/api/properties/${propertyId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      // No need to handle the response as this is a background operation
+    } catch (error) {
+      // Just log the error, don't affect the user experience
+      console.error('Failed to track property view:', error);
+    }
+  };
 
   const nextImage = () => {
     if (imageUrls.length > 1) {

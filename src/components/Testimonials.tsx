@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FaQuoteLeft, FaStar } from 'react-icons/fa';
 
@@ -32,16 +32,27 @@ const testimonials = [
 
 export default function Testimonials() {
   const [activeIndex, setActiveIndex] = useState(0);
-
+  
+  // Memoize testimonials length to prevent unnecessary re-renders
+  const testimonialsLength = useMemo(() => testimonials.length, []);
+  
   useEffect(() => {
+    // Don't set up timer if no testimonials
+    if (testimonialsLength === 0) return;
+    
     const timer = setInterval(() => {
       setActiveIndex((current) => 
-        current === testimonials.length - 1 ? 0 : current + 1
+        current === testimonialsLength - 1 ? 0 : current + 1
       );
     }, 5000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonialsLength]);
+
+  // If no testimonials, don't render anything
+  if (testimonialsLength === 0) {
+    return null;
+  }
 
   return (
     <div className="relative max-w-5xl mx-auto">

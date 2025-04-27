@@ -74,5 +74,29 @@
     "noReviews": "Pas Encore d'Avis",
     "shareExperience": "Partagez votre expérience avec les propriétés que vous avez visitées ou habitées",
     "pleaseLogin": "Veuillez vous connecter pour accéder à votre profil"
+  },
+  "Map": {
+    "title": "Rechercher des Propriétés sur la Carte",
+    "loadingMap": "Chargement de la carte...",
+    "nearUniversity": "Près de {university}",
+    "propertyDetails": "Détails de la Propriété",
+    "viewProperty": "Voir la Propriété",
+    "universityLabel": "Université",
+    "tubeStationLabel": "Station de Métro",
+    "landmarkLabel": "Point d'Intérêt",
+    "parkLabel": "Parc",
+    "month": "mois",
+    "transportNodeLabel": "Transport"
+  },
+  "PropertyDetails": {
+    "available": "Disponible à partir de",
+    "bedrooms": "Chambres",
+    "bathrooms": "Salles de bains",
+    "contactLandlord": "Contacter le Propriétaire",
+    "propertyType": "Type de Propriété",
+    "amenities": "Équipements",
+    "location": "Emplacement",
+    "reviews": "Avis",
+    "similar": "Propriétés Similaires"
   }
 } 

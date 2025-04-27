@@ -5,8 +5,13 @@
     "button": "Search"
   },
   "filters": {
+    "filters": "Filters",
+    "price": "Price",
+    "bedrooms": "Bedrooms",
+    "amenities": "Amenities",
     "budget": "Budget",
-    "amenities": "Amenities"
+    "any": "Any",
+    "reset": "Reset"
   },
   "Index": {
     "title": "RoomZoom - Student Housing in London"
@@ -28,21 +33,29 @@
     "loginTitle": "Log In",
     "loginDescription": "Enter your credentials to access your account",
     "registerTitle": "Register",
+    "register": "Register",
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "nameLabel": "Full Name",
     "confirmPasswordLabel": "Confirm Password",
     "loginButton": "Log In",
+    "loggingInButton": "Logging in...",
     "registerButton": "Register",
+    "registeringButton": "Registering...",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "registerNow": "Register Now",
     "registerHere": "Register here",
     "loginNow": "Log In",
+    "loginHere": "Login here",
     "loginSuccess": "Login successful",
     "registerSuccess": "Registration successful",
-    "errorMessage": "An error occurred"
+    "errorMessage": "An error occurred",
+    "studentRole": "Student",
+    "landlordRole": "Landlord",
+    "studentRoleDescription": "Register as a student to browse and favorite properties.",
+    "landlordRoleDescription": "Register as a landlord to list your properties."
   },
   "Dashboard": {
     "landlordDashboard": "Landlord Dashboard",
@@ -74,5 +87,29 @@
     "noReviews": "No Reviews Yet",
     "shareExperience": "Share your experience with properties you've visited or lived in",
     "pleaseLogin": "Please log in to access your profile"
+  },
+  "Map": {
+    "title": "Find Properties on Map",
+    "loadingMap": "Loading map...",
+    "nearUniversity": "Near {university}",
+    "propertyDetails": "Property Details",
+    "viewProperty": "View Property",
+    "universityLabel": "University",
+    "tubeStationLabel": "Tube Station",
+    "landmarkLabel": "Landmark",
+    "parkLabel": "Park",
+    "month": "month",
+    "transportNodeLabel": "Transport"
+  },
+  "PropertyDetails": {
+    "available": "Available from",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "contactLandlord": "Contact Landlord",
+    "propertyType": "Property Type",
+    "amenities": "Amenities",
+    "location": "Location",
+    "reviews": "Reviews",
+    "similar": "Similar Properties"
   }
 } 

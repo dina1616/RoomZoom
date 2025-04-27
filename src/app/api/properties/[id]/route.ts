@@ -57,14 +57,30 @@ export async function GET(
             return NextResponse.json({ error: 'Property not found' }, { status: 404 });
         }
 
+        // Get property stats using Prisma client instead of raw SQL
+        let stats = null;
+        try {
+            const propertyStats = await prisma.propertyStat.findUnique({
+                where: { propertyId }
+            });
+            
+            if (propertyStats) {
+                stats = propertyStats;
+            }
+        } catch (error) {
+            console.error(`Error fetching stats for property ${propertyId}:`, error);
+            // Continue execution even if stats fetch fails
+        }
+
         // Calculate average rating
         const totalRating = property.reviews.reduce((sum: number, review: { rating: number }) => sum + review.rating, 0);
         const averageRating = property.reviews.length > 0 ? totalRating / property.reviews.length : 0;
 
-        // Add average rating to the response object
+        // Add average rating and stats to the response object
         const propertyWithAvgRating = { 
             ...property, 
-            averageRating: parseFloat(averageRating.toFixed(1)) // Format to 1 decimal place
+            averageRating: parseFloat(averageRating.toFixed(1)), // Format to 1 decimal place
+            stats: stats
         };
 
         return NextResponse.json({ property: propertyWithAvgRating });

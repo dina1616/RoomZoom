@@ -3,6 +3,63 @@ import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// Helper function to generate a random date within the next few months
+function getRandomFutureDate() {
+  const today = new Date();
+  const futureDate = new Date(today);
+  futureDate.setDate(today.getDate() + Math.floor(Math.random() * 90) + 10); // Random date between 10-100 days in future
+  return futureDate;
+}
+
+// Helper function to get a random element from an array
+function getRandomElement<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+// Helper function to get random subset of array elements
+function getRandomSubset<T>(array: T[], min = 1, max?: number): T[] {
+  const maxItems = max || array.length;
+  const count = Math.floor(Math.random() * (maxItems - min + 1)) + min;
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+// Create property statistics after property creation
+async function createPropertyStats(propertyId: string) {
+  try {
+    // Generate random stats
+    const viewCount = Math.floor(Math.random() * 200);
+    const inquiryCount = Math.floor(Math.random() * 30);
+    const favoriteCount = Math.floor(Math.random() * 50);
+    
+    // Create statistics with raw SQL
+    await prisma.$executeRaw`
+      INSERT INTO "PropertyStat" (
+        "id", 
+        "propertyId", 
+        "viewCount", 
+        "inquiryCount", 
+        "favoriteCount", 
+        "lastViewed", 
+        "createdAt", 
+        "updatedAt"
+      )
+      VALUES (
+        ${crypto.randomUUID()}, 
+        ${propertyId}, 
+        ${viewCount}, 
+        ${inquiryCount}, 
+        ${favoriteCount}, 
+        ${new Date()},
+        ${new Date()},
+        ${new Date()}
+      )
+    `;
+  } catch (error) {
+    console.error(`Error creating stats for property ${propertyId}:`, error);
+  }
+}
+
 async function main() {
   console.log(`Start seeding ...`);
 
@@ -381,51 +438,54 @@ async function main() {
 
   console.log(`Seeded ${await prisma.address.count()} addresses`);
 
-  // Enhanced Property Image URLs with realistic images
-  const propertyImages = {
-    'studio': [
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
-      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2',
-      'https://images.unsplash.com/photo-1536376072261-38c75010e6c9',
-      'https://images.unsplash.com/photo-1630699144867-37acec97df5a'
-    ],
-    'flat1bed': [
-      'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8',
-      'https://images.unsplash.com/photo-1560185007-c5ca9d2c014d',
-      'https://images.unsplash.com/photo-1564078516393-cf04bd966897',
-      'https://images.unsplash.com/photo-1574362848149-11496d93a7c7',
-      'https://images.unsplash.com/photo-1598928636135-d146006ff4be'
-    ],
-    'flat2bed': [
-      'https://images.unsplash.com/photo-1560448204-603b3fc33ddc',
-      'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e',
-      'https://images.unsplash.com/photo-1533090161767-e6ffed986c88',
-      'https://images.unsplash.com/photo-1556912167-f556f1f39fdf',
-      'https://images.unsplash.com/photo-1560185127-6ed189bf02f4'
-    ],
-    'house3bed': [
-      'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83',
-      'https://images.unsplash.com/photo-1560184897-ae75f418493e',
-      'https://images.unsplash.com/photo-1560185008-a33f5c736a5d',
-      'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf',
-      'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6'
-    ],
-    'penthouse': [
-      'https://images.unsplash.com/photo-1600607686527-6fb886090705',
-      'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d',
-      'https://images.unsplash.com/photo-1600607687644-aac76f1583e2',
-      'https://images.unsplash.com/photo-1613977257363-707ba9348227',
-      'https://images.unsplash.com/photo-1602872030490-4a484a7b3ba6'
-    ],
-    'luxury': [
-      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0',
-      'https://images.unsplash.com/photo-1600585154084-4e5fe7c39198',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c',
-      'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea',
-      'https://images.unsplash.com/photo-1600607687126-a2f994c74c63'
-    ]
-  };
+  // Collection of all landlord users for random assignment to properties
+  const landlords = [
+    landlordUser, 
+    individualLandlord, 
+    premiumLandlord, 
+    davidLandlord, 
+    oakTreeLandlord
+  ];
+
+  // London neighborhood data for randomization
+  const londonNeighborhoods = [
+    { name: 'Camden', borough: 'Camden', latitude: 51.5390, longitude: -0.1426, tubeStation: 'Camden Town' },
+    { name: 'Islington', borough: 'Islington', latitude: 51.5416, longitude: -0.1028, tubeStation: 'Angel' },
+    { name: 'Shoreditch', borough: 'Hackney', latitude: 51.5229, longitude: -0.0777, tubeStation: 'Shoreditch High Street' },
+    { name: 'Brixton', borough: 'Lambeth', latitude: 51.4626, longitude: -0.1159, tubeStation: 'Brixton' },
+    { name: 'Greenwich', borough: 'Greenwich', latitude: 51.4826, longitude: -0.0096, tubeStation: 'Greenwich' },
+    { name: 'Hampstead', borough: 'Camden', latitude: 51.5559, longitude: -0.1781, tubeStation: 'Hampstead' },
+    { name: 'Notting Hill', borough: 'Kensington & Chelsea', latitude: 51.5139, longitude: -0.1969, tubeStation: 'Notting Hill Gate' },
+    { name: 'Fulham', borough: 'Hammersmith & Fulham', latitude: 51.4734, longitude: -0.2216, tubeStation: 'Fulham Broadway' },
+    { name: 'Clapham', borough: 'Lambeth', latitude: 51.4620, longitude: -0.1389, tubeStation: 'Clapham Common' },
+    { name: 'Wimbledon', borough: 'Merton', latitude: 51.4214, longitude: -0.2051, tubeStation: 'Wimbledon' }
+  ];
+
+  // Property types for variety
+  const propertyTypes = [
+    'Studio', 
+    'Apartment', 
+    'House', 
+    'Flat', 
+    'Room in Shared House', 
+    'Duplex'
+  ];
+
+  // Image URLs for properties (placeholder images)
+  const propertyImages = [
+    'https://images.unsplash.com/photo-1580587771525-78b9dba3b914',
+    'https://images.unsplash.com/photo-1567496898669-ee935f5f647a',
+    'https://images.unsplash.com/photo-1571939228382-b2f2b585ce15',
+    'https://images.unsplash.com/photo-1484154218962-a197022b5858',
+    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'
+  ];
+
+  // Collection of all amenity IDs for random assignment
+  const allAmenities = [
+    wifi, gym, parking, petFriendly, laundry, kitchen, billsIncluded, 
+    smartTv, studyDesk, balcony, dishwasher, airConditioning, 
+    securitySystem, furnished, roofTerrace, communalGarden, bicycleStorage, concierge
+  ];
 
   // Seed Properties with enhanced details
   // Property 1 - Studio near UCL
@@ -456,7 +516,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.studio.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -494,7 +554,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.flat2bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -531,7 +591,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.flat1bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -567,7 +627,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.studio.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -605,7 +665,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.house3bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -645,7 +705,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.flat2bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -683,7 +743,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.flat1bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -720,7 +780,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.studio.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -761,7 +821,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.luxury.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -800,7 +860,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.flat1bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -839,7 +899,7 @@ async function main() {
         ],
       },
       media: {
-        create: propertyImages.house3bed.map((url, index) => ({
+        create: propertyImages.map((url, index) => ({
           url,
           type: 'IMAGE',
           order: index + 1
@@ -850,31 +910,16 @@ async function main() {
 
   console.log(`Seeded ${await prisma.property.count()} properties`);
 
-  // Add property stats for each property
-  for (const property of [prop1, prop2, prop3, prop4, prop5, prop6, prop7, prop8, prop9, prop10, prop11]) {
-    // Generate random stats for each property
-    const viewCount = Math.floor(Math.random() * 150) + 50; // 50-200 views
-    const inquiryCount = Math.floor(Math.random() * 20) + 5; // 5-25 inquiries
-    const favoriteCount = Math.floor(Math.random() * 15) + 3; // 3-18 favorites
-    
-    // Property stats are stored in the PropertyStat model
-    await prisma.$executeRaw`
-      INSERT INTO "PropertyStat" ("id", "propertyId", "viewCount", "inquiryCount", "favoriteCount", "lastViewed", "createdAt", "updatedAt")
-      VALUES (
-        ${crypto.randomUUID()}, 
-        ${property.id}, 
-        ${viewCount}, 
-        ${inquiryCount}, 
-        ${favoriteCount}, 
-        ${new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000))},
-        ${new Date()},
-        ${new Date()}
-      )
-    `;
+  // Add property stats for each named property
+  console.log('Creating property statistics for named properties...');
+  const namedProperties = [prop1, prop2, prop3, prop4, prop5, prop6, prop7, prop8, prop9, prop10, prop11];
+  
+  for (const property of namedProperties) {
+    await createPropertyStats(property.id);
   }
   
-  console.log(`Seeded property statistics records for ${[prop1, prop2, prop3, prop4, prop5, prop6, prop7, prop8, prop9, prop10, prop11].length} properties`);
-  
+  console.log(`Created statistics for ${namedProperties.length} named properties`);
+
   // Create sample inquiries for properties
   const inquiryMessages = [
     "I'm interested in viewing this property. Is it still available?",
@@ -1315,7 +1360,106 @@ async function main() {
 
   console.log(`Seeded ${await prisma.transportNode.count()} transport nodes`);
 
-  console.log(`Seeding finished.`);
+  // Generate a large number of additional randomized properties
+  console.log('Creating additional sample properties...');
+  const propertiesToCreate = 25; // Create 25 more properties
+  const propertyPromises = [];
+
+  // Create some property descriptions
+  const propertyDescriptions = [
+    "This bright and spacious accommodation is perfect for students looking for a convenient location near university facilities.",
+    "A stunning property in the heart of London, offering exceptional living spaces with high-quality fixtures and fittings.",
+    "Modern and stylish student accommodation with plenty of natural light and storage space.",
+    "This charming property combines classic London architecture with modern interior design.",
+    "Luxurious living designed with students in mind. This premium accommodation features generous living spaces.",
+    "A cozy and well-maintained property perfect for student living.",
+    "Contemporary student housing with an emphasis on creating ideal study environments.",
+    "This exceptional accommodation offers the perfect balance between student living and sophisticated city lifestyle.",
+    "Practical and efficient student living space with smart storage solutions and durable furnishings.",
+    "A unique property with character and charm, offering students a distinctive living experience."
+  ];
+
+  for (let i = 0; i < propertiesToCreate; i++) {
+    // Select random data from our collections
+    const neighborhood = getRandomElement(londonNeighborhoods);
+    const propertyType = getRandomElement(propertyTypes);
+    const description = getRandomElement(propertyDescriptions);
+    const randomAmenities = getRandomSubset(allAmenities, 3, 10);
+    const price = Math.floor(Math.random() * 1500) + 600; // Random price between £600-£2100
+    
+    // Add small variations to coordinates
+    const latVariation = (Math.random() - 0.5) * 0.01;
+    const lngVariation = (Math.random() - 0.5) * 0.01;
+    
+    // Calculate bedrooms based on property type
+    let bedrooms = 1;
+    if (propertyType === 'Studio') {
+      bedrooms = 0;
+    } else if (propertyType === 'Room in Shared House') {
+      bedrooms = 1;
+    } else {
+      bedrooms = Math.floor(Math.random() * 3) + 1; // 1-3 bedrooms
+    }
+    
+    // Bathrooms usually fewer than bedrooms
+    const bathrooms = Math.max(1, Math.min(bedrooms, Math.floor(Math.random() * 2) + 1));
+    
+    // Choose a random landlord
+    const randomLandlord = getRandomElement(landlords);
+    
+    // Create the property without nested PropertyStat creation
+    const propertyPromise = prisma.property.create({
+      data: {
+        title: `${propertyType} in ${neighborhood.name}`,
+        description: description,
+        price: price,
+        addressString: `${Math.floor(Math.random() * 100) + 1} ${neighborhood.name} Road, London`,
+        borough: neighborhood.borough,
+        latitude: neighborhood.latitude + latVariation,
+        longitude: neighborhood.longitude + lngVariation,
+        tubeStation: neighborhood.tubeStation,
+        propertyType: propertyType,
+        bedrooms: bedrooms,
+        bathrooms: bathrooms,
+        available: getRandomFutureDate(),
+        verified: Math.random() > 0.2, // 80% of properties are verified
+        ownerId: randomLandlord.id,
+        
+        // Connect random amenities
+        amenities: {
+          connect: randomAmenities.map(amenity => ({ id: amenity.id }))
+        },
+        
+        // Add random media (1-3 images)
+        media: {
+          createMany: {
+            data: getRandomSubset(propertyImages, 1, 3).map((url, index) => ({
+              url,
+              type: 'IMAGE',
+              order: index + 1
+            }))
+          }
+        }
+      }
+    });
+    
+    propertyPromises.push(propertyPromise);
+  }
+  
+  // Wait for all properties to be created
+  const createdProperties = await Promise.all(propertyPromises);
+  console.log(`Generated ${propertiesToCreate} additional properties with randomized data.`);
+
+  // Create stats for each additional property
+  console.log('Creating property statistics for additional properties...');
+  for (const property of createdProperties) {
+    await createPropertyStats(property.id);
+  }
+  
+  console.log(`Created statistics for ${createdProperties.length} additional properties`);
+  console.log(`Total properties: ${await prisma.property.count()}`);
+
+  console.log(`Seeding completed!`);
 }
 
 main()

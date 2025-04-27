@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import PropertyCard from '@/components/PropertyCard';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import StatisticsCard from '@/components/StatisticsCard';
 
 // Dashboard stats interface
 interface DashboardStats {
@@ -43,19 +44,21 @@ export default function DashboardPage() {
           }
           
           const data = await res.json();
-          setProperties(data.properties || []);
+          
+          // Ensure properties is always an array
+          const propertiesArray = Array.isArray(data.properties) ? data.properties : [];
+          setProperties(propertiesArray);
           
           // Calculate stats
-          const totalProps = data.properties.length;
+          const totalProps = propertiesArray.length;
           const avgPrice = totalProps > 0 
-            ? data.properties.reduce((sum: number, p: any) => sum + p.price, 0) / totalProps 
+            ? propertiesArray.reduce((sum: number, p: any) => sum + (p.price || 0), 0) / totalProps 
             : 0;
             
-          // Set statistics
+          // Set statistics from API response or default to 0
           setStats({
             totalProperties: totalProps,
             averageRent: avgPrice,
-            // These would ideally come from separate API endpoints
             viewsCount: data.viewsCount || 0,
             inquiriesCount: data.inquiriesCount || 0
           });
@@ -122,22 +125,34 @@ export default function DashboardPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-semibold text-gray-700">{t('totalProperties')}</h2>
-                <p className="text-3xl font-bold mt-2">{stats.totalProperties}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-semibold text-gray-700">{t('averageRent')}</h2>
-                <p className="text-3xl font-bold mt-2">£{stats.averageRent.toFixed(2)}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-semibold text-gray-700">{t('viewsCount')}</h2>
-                <p className="text-3xl font-bold mt-2">{stats.viewsCount}</p>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-semibold text-gray-700">{t('inquiriesCount')}</h2>
-                <p className="text-3xl font-bold mt-2">{stats.inquiriesCount}</p>
-              </div>
+              <StatisticsCard
+                title={t('totalProperties')}
+                value={stats.totalProperties}
+                icon="property"
+                color="blue"
+                isLoading={isDataLoading}
+              />
+              <StatisticsCard
+                title={t('averageRent')}
+                value={`£${stats.averageRent.toFixed(0)}`}
+                icon="price"
+                color="green"
+                isLoading={isDataLoading}
+              />
+              <StatisticsCard
+                title={t('viewsCount')}
+                value={stats.viewsCount}
+                icon="view"
+                color="purple"
+                isLoading={isDataLoading}
+              />
+              <StatisticsCard
+                title={t('inquiriesCount')}
+                value={stats.inquiriesCount}
+                icon="inquiry"
+                color="orange"
+                isLoading={isDataLoading}
+              />
             </motion.div>
 
             {/* Properties List */}
@@ -170,22 +185,46 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {properties.map((prop: any) => (
-                    <PropertyCard
-                      key={prop.id}
-                      id={prop.id}
-                      title={prop.title}
-                      price={prop.price}
-                      address={prop.addressString || ''}
-                      tubeStation={prop.tubeStation || undefined}
-                      bedrooms={prop.bedrooms}
-                      bathrooms={prop.bathrooms}
-                      media={prop.media}
-                      amenities={prop.amenities}
-                      availableFrom={new Date(prop.available)}
-                      propertyType={prop.propertyType}
-                      isLandlordView={true}
-                    />
+                  {properties.map((property) => (
+                    <motion.div 
+                      key={property.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="bg-white rounded-lg shadow-md overflow-hidden"
+                    >
+                      <PropertyCard
+                        id={property.id}
+                        title={property.title}
+                        price={property.price}
+                        address={property.addressString || ''}
+                        tubeStation={property.tubeStation || ''}
+                        bedrooms={property.bedrooms}
+                        bathrooms={property.bathrooms}
+                        media={property.media}
+                        amenities={property.amenities || []}
+                        rating={0}
+                        reviewCount={0}
+                        availableFrom={new Date(property.available)}
+                        propertyType={property.propertyType}
+                        isLandlordView={true}
+                      />
+                      {/* Add Stats button */}
+                      <div className="px-4 py-3 bg-gray-50 flex justify-between items-center">
+                        <Link 
+                          href={`/dashboard/property-stats/${property.id}`} 
+                          className="text-indigo-600 hover:text-indigo-800 flex items-center"
+                        >
+                          <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          View Statistics
+                        </Link>
+                        <span className="text-sm text-gray-500">
+                          {property.stats ? `${property.stats.viewCount} views` : 'No stats'}
+                        </span>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               )}

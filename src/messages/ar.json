@@ -74,5 +74,29 @@
     "noReviews": "لا توجد تقييمات حتى الآن",
     "shareExperience": "شارك تجربتك مع العقارات التي زرتها أو عشت فيها",
     "pleaseLogin": "يرجى تسجيل الدخول للوصول إلى ملفك الشخصي"
+  },
+  "Map": {
+    "title": "البحث عن العقارات على الخريطة",
+    "loadingMap": "جاري تحميل الخريطة...",
+    "nearUniversity": "بالقرب من {university}",
+    "propertyDetails": "تفاصيل العقار",
+    "viewProperty": "عرض العقار",
+    "universityLabel": "جامعة",
+    "tubeStationLabel": "محطة مترو",
+    "landmarkLabel": "معلم",
+    "parkLabel": "حديقة",
+    "month": "شهر",
+    "transportNodeLabel": "وسائل النقل"
+  },
+  "PropertyDetails": {
+    "available": "متاح من",
+    "bedrooms": "غرف النوم",
+    "bathrooms": "الحمامات",
+    "contactLandlord": "التواصل مع المالك",
+    "propertyType": "نوع العقار",
+    "amenities": "المرافق",
+    "location": "الموقع",
+    "reviews": "التقييمات",
+    "similar": "عقارات مشابهة"
   }
 } 
