@@ -9,13 +9,15 @@
     "start": "next start",
     "lint": "next lint",
     "db:seed": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts",
-    "db:seed:js": "node scripts/seed-properties.js"
+    "db:seed:js": "node scripts/seed-properties.js",
+    "db:migrate:supabase": "node scripts/migrate-to-supabase.js"
   },
   "prisma": {
     "seed": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "@supabase/supabase-js": "^2.39.7",
     "axios": "^1.6.5",
     "bcryptjs": "^2.4.3",
     "date-fns": "^3.6.0",
