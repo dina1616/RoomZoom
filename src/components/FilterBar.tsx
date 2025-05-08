@@ -78,17 +78,19 @@ const AmenityToggle: React.FC<AmenityToggleProps> = ({ onChange }) => {
     );
   };
 
- useEffect(() => {
+  useEffect(() => {
     onChange(selectedAmenities);
   }, [selectedAmenities, onChange]);
 
+  // Generate an ID for each amenity based on its name
+  const getAmenityId = (amenity: string) => `amenity-${amenity.replace(/\s+/g, '-').toLowerCase()}`;
 
   return (
     <fieldset className="p-2 border rounded">
       <legend className="block mb-2 font-semibold px-1">{t('amenities')}</legend>
       <div className="grid grid-cols-2 gap-2">
         {availableAmenities.map((amenity) => {
-            const amenityId = React.useId ? React.useId() : `amenity-${amenity.replace(/\s+/g, '-').toLowerCase()}`;
+            const amenityId = getAmenityId(amenity);
             return (
               <div key={amenity} className="flex items-center">
                 <input 
@@ -124,7 +126,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ onFilterChange }) => {
     };
   };
 
-  const debouncedFilterChange = React.useCallback(debounce(onFilterChange, 500), [onFilterChange]);
+  // Create memoized debounced version of onFilterChange
+  const debouncedFilterChange = React.useCallback(
+    (filters: FilterValues) => {
+      const handler = debounce((f: FilterValues) => onFilterChange(f), 500);
+      handler(filters);
+    },
+    [onFilterChange]
+  );
 
   useEffect(() => {
     debouncedFilterChange(currentFilters);

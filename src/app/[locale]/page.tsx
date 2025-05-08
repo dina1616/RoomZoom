@@ -56,7 +56,18 @@ export default function Home({ params: { locale } }: HomeProps) {
             from vibrant Camden to academic Bloomsbury.
           </p>
           <div className="h-[500px] rounded-lg overflow-hidden shadow-lg">
-            <MapComponent zoom={12} center={[51.5074, -0.1278]} />
+            <MapComponent 
+              zoom={11} 
+              center={[51.5074, -0.1278]}
+              showControls={true}
+              disableAutoFetch={false}
+              showUniversities={true}
+              showTubeStations={true}
+              showLandmarks={true}
+              showParks={true}
+              showNeighborhoods={true}
+              showShoppingAreas={true}
+            />
           </div>
         </div>
       </section>

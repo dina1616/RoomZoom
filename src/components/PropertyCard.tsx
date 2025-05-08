@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaHeart, FaRegHeart, FaBed, FaBath, FaSubway, FaWifi, FaWater } from 'react-icons/fa';
@@ -72,29 +72,36 @@ export default function PropertyCard({
   
   // Process images from media array or fallback to imageUrl
   const processedImages = useMemo(() => {
-    // Debug the image data coming in
-    console.log('Media:', media);
-    console.log('ImageUrl:', imageUrl);
+    // Remove debug console.logs
     
-    if (media && media.length > 0) {
-      return media.map(item => item.url);
-    } else if (imageUrl && imageUrl.length > 0 && typeof imageUrl[0] === 'string') {
-      return imageUrl;
-    } else if (property?.images) {
+    if (media && Array.isArray(media) && media.length > 0) {
+      return media.map(item => item.url).filter(Boolean);
+    } 
+    
+    if (imageUrl && Array.isArray(imageUrl) && imageUrl.length > 0) {
+      return imageUrl.filter(url => typeof url === 'string');
+    } 
+    
+    if (property?.images) {
       // Handle the case where images is a string field (comma-separated or single URL)
       const imagesField = property.images;
       if (typeof imagesField === 'string') {
         if (imagesField.includes(',')) {
-          return imagesField.split(',').map(url => url.trim());
+          return imagesField.split(',').map(url => url.trim()).filter(Boolean);
         }
         return [imagesField];
+      }
+      
+      // If it's an array
+      if (Array.isArray(imagesField) && imagesField.length > 0) {
+        return imagesField.filter(Boolean);
       }
     }
     
     // Use a valid placeholder image path
     return ['/images/placeholder-property.jpg'];
   }, [media, imageUrl, property?.images]);
-  
+
   const hasAmenity = (name: string): boolean => {
     if (!amenities || typeof amenities !== 'object') return false;
     if (Array.isArray(amenities)) {
@@ -111,13 +118,25 @@ export default function PropertyCard({
     { icon: <MdPets className="w-4 h-4" />, label: 'Pets Allowed', available: hasAmenity('Pet Friendly') || hasAmenity('Pets Allowed') },
   ];
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % processedImages.length);
-  };
+  // Memoize the available amenities to prevent unnecessary recalculations
+  const availableAmenitiesList = useMemo(() => {
+    return amenitiesList.filter(amenity => amenity.available);
+  }, [amenitiesList]);
 
-  const prevImage = () => {
+  // Memoize the navigation functions
+  const nextImage = useCallback(() => {
+    setCurrentImageIndex((prev) => (prev + 1) % processedImages.length);
+  }, [processedImages.length]);
+
+  const prevImage = useCallback(() => {
     setCurrentImageIndex((prev) => (prev - 1 + processedImages.length) % processedImages.length);
-  };
+  }, [processedImages.length]);
+
+  // Reset image index when images change
+  useEffect(() => {
+    setCurrentImageIndex(0);
+    setImgError(false);
+  }, [processedImages]);
 
   return (
     <div 
@@ -226,17 +245,15 @@ export default function PropertyCard({
 
           {/* Amenities */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {amenitiesList.map((amenity, index) => (
-              amenity.available && (
-                <div
-                  key={index}
-                  className="flex items-center bg-gray-100 px-2 py-1 rounded-full text-sm text-gray-600"
-                  title={amenity.label}
-                >
-                  {amenity.icon}
-                  <span className="ml-1 hidden sm:inline">{amenity.label}</span>
-                </div>
-              )
+            {availableAmenitiesList.map((amenity, index) => (
+              <div
+                key={index}
+                className="flex items-center bg-gray-100 px-2 py-1 rounded-full text-sm text-gray-600"
+                title={amenity.label}
+              >
+                {amenity.icon}
+                <span className="ml-1 hidden sm:inline">{amenity.label}</span>
+              </div>
             ))}
           </div>
 

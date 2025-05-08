@@ -6,6 +6,9 @@ import PropertyImageGallery from '@/components/PropertyImageGallery';
 import PropertyMapView from '@/components/PropertyMapView';
 import ReviewSection from '@/components/ReviewSection';
 import SimilarProperties from '@/components/SimilarProperties';
+import PropertyDetailWrapper from '@/components/PropertyDetailWrapper';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/authUtils';
 
 const prisma = new PrismaClient(); // Consider moving client instantiation to a lib file
 
@@ -103,10 +106,31 @@ async function getPropertyDetails(id: string): Promise<PropertyDetails | null> {
   }
 }
 
+// Get user auth status and email from cookies
+async function getUserAuthInfo() {
+  const cookieStore = cookies();
+  const authToken = cookieStore.get('auth_token')?.value;
+  
+  if (!authToken) {
+    return { isAuthenticated: false, userEmail: null };
+  }
+  
+  const decoded = verifyToken(authToken);
+  if (!decoded) {
+    return { isAuthenticated: false, userEmail: null };
+  }
+  
+  return { 
+    isAuthenticated: true, 
+    userEmail: decoded.email as string
+  };
+}
+
 // Dynamic Page Component
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
   const id = params.id;
   const property = await getPropertyDetails(id);
+  const { isAuthenticated, userEmail } = await getUserAuthInfo();
 
   if (!property) {
     notFound(); // Trigger 404 page
@@ -182,6 +206,14 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
               </p>
               {/* Optionally display company name, verification status from landlordProfile */} 
            </section>
+           
+           {/* Contact Landlord button with Inquiry Modal */}
+           <PropertyDetailWrapper
+             propertyId={property.id}
+             propertyTitle={property.title}
+             isAuthenticated={isAuthenticated}
+             userEmail={userEmail || ''}
+           />
         </section>
 
         {/* Right Column: Map (Client Component) */}

@@ -91,7 +91,7 @@ export default function Testimonials() {
                       ))}
                     </div>
                     <p className="text-gray-600 text-lg mb-4 italic">
-                      "{testimonial.text}"
+                      &ldquo;{testimonial.text}&rdquo;
                     </p>
                     <div>
                       <h4 className="font-semibold text-lg">{testimonial.name}</h4>

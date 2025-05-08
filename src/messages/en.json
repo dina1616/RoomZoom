@@ -79,7 +79,12 @@
     "addProperty": "Add Property",
     "noProperties": "No Properties Yet",
     "startAddingProperties": "Start adding your properties to showcase them to students",
-    "addFirstProperty": "Add Your First Property"
+    "addFirstProperty": "Add Your First Property",
+    "myInquiries": "Incoming Inquiries",
+    "noInquiries": "No Inquiries Yet",
+    "inquiryManagement": "Inquiry Management",
+    "respondToInquiry": "Respond",
+    "markAsClosed": "Mark as Closed"
   },
   "Profile": {
     "myProfile": "My Profile",
@@ -97,7 +102,10 @@
     "myReviews": "My Reviews",
     "noReviews": "No Reviews Yet",
     "shareExperience": "Share your experience with properties you've visited or lived in",
-    "pleaseLogin": "Please log in to access your profile"
+    "pleaseLogin": "Please log in to access your profile",
+    "myInquiries": "My Inquiries",
+    "noInquiriesSent": "No Inquiries Sent Yet",
+    "startInquiring": "Start inquiring about properties you're interested in"
   },
   "Map": {
     "title": "Find Properties on Map",
@@ -122,5 +130,55 @@
     "location": "Location",
     "reviews": "Reviews",
     "similar": "Similar Properties"
+  },
+  "Property": {
+    "inquireAbout": "Inquire about",
+    "loginToInquire": "You need to be logged in to send an inquiry.",
+    "login": "Login",
+    "message": "Message",
+    "email": "Email Address",
+    "phone": "Phone Number (Optional)",
+    "preferredMoveInDate": "Preferred Move-in Date (Optional)",
+    "cancel": "Cancel",
+    "sendInquiry": "Send Inquiry",
+    "sending": "Sending...",
+    "inquirySent": "Your inquiry has been sent successfully!",
+    "inquiryError": "Failed to send inquiry. Please try again.",
+    "inquiryMessagePlaceholder": "I'm interested in this property and would like to know more about...",
+    "emailPlaceholder": "Your email address",
+    "phonePlaceholder": "Your phone number",
+    "inquiryMessageRequired": "Please enter a message",
+    "inquiryMessageTooShort": "Message must be at least 5 characters",
+    "emailRequired": "Email address is required",
+    "invalidEmail": "Please enter a valid email address",
+    "loginRequired": "You need to login to send an inquiry"
+  },
+  "Modal": {
+    "close": "Close",
+    "inquireAbout": "Inquire About Property"
+  },
+  "Inquiries": {
+    "inquiryFrom": "Inquiry from",
+    "inquiryAbout": "Inquiry about",
+    "status": "Status",
+    "date": "Date",
+    "pending": "Pending",
+    "responded": "Responded",
+    "closed": "Closed",
+    "message": "Message",
+    "contact": "Contact Information",
+    "email": "Email",
+    "phone": "Phone",
+    "moveInDate": "Preferred Move-in Date",
+    "notSpecified": "Not specified",
+    "respond": "Respond",
+    "markAsResponded": "Mark as Responded",
+    "markAsClosed": "Mark as Closed",
+    "delete": "Delete",
+    "viewProperty": "View Property",
+    "loadingInquiries": "Loading inquiries...",
+    "confirmDelete": "Are you sure you want to delete this inquiry?",
+    "deleteSuccess": "Inquiry deleted successfully",
+    "statusUpdateSuccess": "Status updated successfully"
   }
 } 

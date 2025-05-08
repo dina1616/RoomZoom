@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { formatCurrency } from '@/lib/utils';
 import { PropertyWithDetails as Property } from '@/types/property';
+import Image from 'next/image';
 
 // Fix Leaflet's default icon
 // This needs to be done before any Leaflet Marker is created
@@ -287,6 +288,8 @@ interface MapComponentProps {
   showTubeStations?: boolean;
   showLandmarks?: boolean;
   showParks?: boolean;
+  showNeighborhoods?: boolean;
+  showShoppingAreas?: boolean;
   transportNodes?: Array<{
     id: string;
     name: string;
@@ -305,7 +308,139 @@ interface MapComponentProps {
   markerPosition?: [number, number];
   onMarkerChange?: (lat: number, lng: number) => void;
   showControls?: boolean;
+  disableAutoFetch?: boolean;
 }
+
+// Cache key for storing map properties
+const MAP_CACHE_KEY = 'mapPropertiesCache';
+// Cache timeout in milliseconds (5 minutes)
+const MAP_CACHE_TIMEOUT = 5 * 60 * 1000;
+
+// Additional London neighborhoods and student areas
+const londonNeighborhoods = [
+  { id: 'camden', name: "Camden", lat: 51.5390, lng: -0.1425, type: "student-area", description: "Vibrant market area popular with students" },
+  { id: 'shoreditch', name: "Shoreditch", lat: 51.5229, lng: -0.0777, type: "student-area", description: "Trendy area with tech startups and nightlife" },
+  { id: 'islington', name: "Islington", lat: 51.5362, lng: -0.1033, type: "residential", description: "Popular residential area with good connections" },
+  { id: 'brixton', name: "Brixton", lat: 51.4626, lng: -0.1159, type: "student-area", description: "Diverse cultural area with music venues" },
+  { id: 'hackney', name: "Hackney", lat: 51.5454, lng: -0.0558, type: "student-area", description: "Creative hub with affordable housing" },
+  { id: 'clapham', name: "Clapham", lat: 51.4627, lng: -0.1680, type: "student-area", description: "Popular with young professionals" },
+  { id: 'stratford', name: "Stratford", lat: 51.5431, lng: -0.0060, type: "student-area", description: "Home to Olympic Park and Westfield" },
+  { id: 'bloomsbury', name: "Bloomsbury", lat: 51.5209, lng: -0.1277, type: "academic", description: "Academic center with major universities" },
+  { id: 'south-kensington', name: "South Kensington", lat: 51.4949, lng: -0.1774, type: "academic", description: "Museum district and Imperial College" },
+  { id: 'whitechapel', name: "Whitechapel", lat: 51.5180, lng: -0.0627, type: "student-area", description: "Affordable area with rich history" },
+  { id: 'bethnal-green', name: "Bethnal Green", lat: 51.5271, lng: -0.0549, type: "student-area", description: "Trendy area with Victoria Park nearby" },
+  { id: 'finsbury-park', name: "Finsbury Park", lat: 51.5642, lng: -0.1066, type: "residential", description: "Green spaces and good transport links" },
+  { id: 'wembley', name: "Wembley", lat: 51.5560, lng: -0.2795, type: "entertainment", description: "Home to Wembley Stadium and arena" },
+  { id: 'hammersmith', name: "Hammersmith", lat: 51.4927, lng: -0.2248, type: "residential", description: "Riverside area with good amenities" },
+  { id: 'euston', name: "Euston", lat: 51.5282, lng: -0.1337, type: "transport-hub", description: "Major railway station and UCL nearby" },
+  { id: 'hoxton', name: "Hoxton", lat: 51.5320, lng: -0.0800, type: "student-area", description: "Artistic area with galleries and bars" },
+  { id: 'balham', name: "Balham", lat: 51.4431, lng: -0.1519, type: "residential", description: "Suburban feel with good nightlife" },
+  { id: 'notting-hill', name: "Notting Hill", lat: 51.5139, lng: -0.1969, type: "residential", description: "Trendy area famous for Portobello Market" },
+  { id: 'greenwich', name: "Greenwich", lat: 51.4763, lng: -0.0005, type: "student-area", description: "Historic area with university campus" },
+  { id: 'dalston', name: "Dalston", lat: 51.5461, lng: -0.0754, type: "student-area", description: "Diverse area with nightlife and restaurants" }
+];
+
+// Additional shopping streets and centers
+const shoppingAreas = [
+  { id: 'oxford-street', name: "Oxford Street", lat: 51.5152, lng: -0.1418, type: "shopping-street" },
+  { id: 'covent-garden', name: "Covent Garden", lat: 51.5117, lng: -0.1240, type: "shopping-market" },
+  { id: 'carnaby-street', name: "Carnaby Street", lat: 51.5134, lng: -0.1395, type: "shopping-street" },
+  { id: 'spitalfields', name: "Spitalfields Market", lat: 51.5190, lng: -0.0736, type: "shopping-market" },
+  { id: 'borough-market', name: "Borough Market", lat: 51.5055, lng: -0.0892, type: "food-market" },
+  { id: 'camden-market', name: "Camden Market", lat: 51.5417, lng: -0.1463, type: "shopping-market" },
+  { id: 'boxpark-shoreditch', name: "Boxpark Shoreditch", lat: 51.5235, lng: -0.0772, type: "shopping-center" },
+  { id: 'westfield-london', name: "Westfield London", lat: 51.5065, lng: -0.2219, type: "shopping-center" }
+];
+
+// Function to create neighborhood icon
+const createNeighborhoodIcon = (type: string) => {
+  // Different colors for different neighborhood types
+  let color;
+  switch(type) {
+    case 'student-area':
+      color = '#4f46e5'; // Indigo
+      break;
+    case 'academic':
+      color = '#0ea5e9'; // Sky blue
+      break;
+    case 'residential':
+      color = '#10b981'; // Emerald
+      break;
+    case 'entertainment':
+      color = '#f59e0b'; // Amber
+      break;
+    case 'transport-hub':
+      color = '#ef4444'; // Red
+      break;
+    default:
+      color = '#6b7280'; // Gray
+  }
+  
+  return L.divIcon({
+    className: 'custom-neighborhood-marker',
+    html: `
+      <div class="relative group">
+        <div class="absolute inset-0 rounded-full blur-sm opacity-50 group-hover:opacity-80 transition-opacity" style="background-color: ${color}"></div>
+        <div class="relative rounded-full h-4 w-4 border border-white transform transition-transform group-hover:scale-125" style="background-color: ${color}">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-2 w-2 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    `,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -9],
+  });
+};
+
+// Function to create shopping area icon
+const createShoppingIcon = (type: string) => {
+  let color = '#ec4899'; // Pink default
+  let icon;
+  
+  switch(type) {
+    case 'shopping-street':
+      color = '#ec4899'; // Pink
+      icon = '<path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />';
+      break;
+    case 'shopping-market':
+      color = '#a855f7'; // Purple
+      icon = '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />';
+      break;
+    case 'shopping-center':
+      color = '#d946ef'; // Fuchsia
+      icon = '<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />';
+      break;
+    case 'food-market':
+      color = '#f97316'; // Orange
+      icon = '<path d="M21 15.999V18h-9v-2.001h9zm0-3V15h-9v-2.001h9zm0-3V12h-9V9.999h9zm-10 0v10h-1V6.997h11v3.002H11zm-1-5c0-.55.45-1 1-1h9c.55 0 1 .45 1 1v1H10v-1zM8 2c-.55 0-1 .45-1 1v1H5v10c0 1.1.9 2 2 2h1v3c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-3h1c.3 0 .58-.09.84-.2L7.4 3.8C7.17 2.75 6.66 2 6 2H4c-.55 0-1 .45-1 1s.45 1 1 1h.5L8 2z" />';
+      break;
+    default:
+      icon = '<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />';
+  }
+  
+  return L.divIcon({
+    className: 'custom-shopping-marker',
+    html: `
+      <div class="relative group">
+        <div class="absolute inset-0 rounded-full blur-sm opacity-50 group-hover:opacity-80 transition-opacity" style="background-color: ${color}"></div>
+        <div class="relative rounded-full h-4 w-4 border border-white transform transition-transform group-hover:scale-125" style="background-color: ${color}">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-2 w-2 text-white" viewBox="0 0 24 24" fill="currentColor">
+              ${icon}
+            </svg>
+          </div>
+        </div>
+      </div>
+    `,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -9],
+  });
+};
 
 // Main Map Component
 const MapComponent: React.FC<MapComponentProps> = ({
@@ -320,11 +455,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
   showTubeStations = true,
   showLandmarks = true,
   showParks = true,
+  showNeighborhoods = true,
+  showShoppingAreas = true,
   transportNodes = [],
   filters = {},
   markerPosition,
   onMarkerChange,
   showControls = true,
+  disableAutoFetch = false,
 }) => {
   const t = useTranslations('Map');
   const mapRef = useRef(null);
@@ -332,81 +470,177 @@ const MapComponent: React.FC<MapComponentProps> = ({
   
   // Track if this is the initial render
   const isFirstRender = useRef(true);
+  // Track if fetch has been attempted
+  const fetchAttemptedRef = useRef(false);
   
   // Memoized properties state - defaults to propProperties
   const [properties, setProperties] = useState<Property[]>(propProperties);
   const [loading, setLoading] = useState(false);
   
-  // Stringify filters for dependency comparison
-  const stringifiedFilters = useMemo(() => JSON.stringify(filters), [filters]);
+  // Store previous filter values to detect changes
+  const prevFiltersRef = useRef<string>('');
   
-  // Effect to handle property fetching on filter change
-  useEffect(() => {
-    // If we have properties from props and no active filters, just use those
-    if (propProperties.length > 0 && Object.keys(filters).length === 0) {
-      setProperties(propProperties);
-      return;
-    }
-    
-    // Skip the very first render to avoid duplicate fetching
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    
-    // We have active filters, so we need to fetch filtered properties
-    const fetchFilteredProperties = async () => {
-      try {
-        setLoading(true);
+  // Function to check cache and load cached data
+  const checkAndLoadCache = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cacheKey = `${MAP_CACHE_KEY}-${JSON.stringify(filters)}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
         
-        // Build the query string from filters
-        const params = new URLSearchParams();
-        if (filters.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
-        if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
-        if (filters.bedrooms !== undefined) params.append('bedrooms', filters.bedrooms.toString());
-        if (filters.amenities && filters.amenities.length > 0) {
-          filters.amenities.forEach(amenity => params.append('amenity', amenity));
+        if (cachedData) {
+          const { data, timestamp } = JSON.parse(cachedData);
+          // Check if cache is still valid (not expired)
+          if (Date.now() - timestamp < MAP_CACHE_TIMEOUT && Array.isArray(data) && data.length > 0) {
+            setProperties(data);
+            setLoading(false);
+            return true; // Cache was valid and loaded
+          } else {
+            // Clear expired cache
+            sessionStorage.removeItem(cacheKey);
+          }
         }
-
-        const queryString = params.toString();
-        const url = `/api/properties${queryString ? `?${queryString}` : ''}`;
-        
-        console.log('Fetching properties with URL:', url);
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch properties');
-        }
-        
-        const data = await response.json();
-        const fetchedProperties = Array.isArray(data) ? data : (data.properties || []);
-        
-        console.log('Fetched properties:', fetchedProperties);
-        setProperties(fetchedProperties);
-      } catch (error) {
-        console.error('Error fetching properties:', error);
-        // If fetch fails, fall back to prop properties
-        if (propProperties.length > 0) {
-          setProperties(propProperties);
-        }
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Cache read error:', err);
+    }
+    return false; // No valid cache found
+  }, [filters]);
+  
+  // Function to update cache
+  const updateCache = useCallback((data: Property[]) => {
+    try {
+      if (typeof window !== 'undefined') {
+        const cacheKey = `${MAP_CACHE_KEY}-${JSON.stringify(filters)}`;
+        const cacheData = {
+          data,
+          timestamp: Date.now()
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      }
+    } catch (err) {
+      console.error('Cache write error:', err);
+    }
+  }, [filters]);
+  
+  // Memoize the fetch function with useCallback
+  const fetchFilteredProperties = useCallback(async () => {
+    // Avoid duplicate fetches within the same session/render
+    if (fetchAttemptedRef.current) {
+      return;
+    }
     
-    // Only fetch if we have active filters or no prop properties
-    if (Object.keys(filters).length > 0 || propProperties.length === 0) {
-      fetchFilteredProperties();
+    // Try to load from cache first
+    if (checkAndLoadCache()) {
+      return; // Successfully loaded from cache
     }
-  }, [stringifiedFilters, propProperties.length]); // Only re-run if filters or propProperties length changes
-
-  // Update properties when propProperties changes and no active filters
+    
+    console.log('MapComponent: Fetching properties with filters:', filters);
+    
+    setLoading(true);
+    fetchAttemptedRef.current = true;
+    
+    try {
+      // Convert filters to query string
+      const params = new URLSearchParams();
+      
+      if (filters.minPrice) params.append('minPrice', filters.minPrice.toString());
+      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
+      if (filters.bedrooms) params.append('bedrooms', filters.bedrooms.toString());
+      if (filters.amenities && filters.amenities.length) 
+        params.append('amenities', filters.amenities.join(','));
+      
+      const queryString = params.toString();
+      const url = `/api/properties${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await fetch(url, {
+        // Add cache control headers to prevent browser caching
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Handle multiple response formats safely
+      let fetchedProperties = [];
+      if (Array.isArray(data)) {
+        fetchedProperties = data;
+      } else if (data && typeof data === 'object') {
+        // Check for properties array or use the whole object if it looks like a property
+        if (Array.isArray(data.properties)) {
+          fetchedProperties = data.properties;
+        } else if (data.id && data.title) {
+          // Single property object
+          fetchedProperties = [data];
+        }
+      }
+      
+      console.log('MapComponent: Successfully fetched properties:', fetchedProperties.length);
+      
+      if (fetchedProperties.length > 0) {
+        setProperties(fetchedProperties);
+        updateCache(fetchedProperties);
+      } else if (propProperties.length > 0) {
+        // Fallback to prop properties if nothing found
+        setProperties(propProperties);
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      // If fetch fails, fall back to prop properties
+      if (propProperties.length > 0) {
+        setProperties(propProperties);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, propProperties, checkAndLoadCache, updateCache]);
+  
+  // Use the memoized fetch function in useEffect
   useEffect(() => {
-    if (Object.keys(filters).length === 0 && propProperties.length > 0) {
-      setProperties(propProperties);
+    // Convert current filters to string for comparison
+    const currentFiltersStr = JSON.stringify(filters);
+    
+    // Check if filters changed - if so, we need to reset and refetch
+    if (prevFiltersRef.current !== currentFiltersStr) {
+      fetchAttemptedRef.current = false;
+      prevFiltersRef.current = currentFiltersStr;
     }
-  }, [propProperties, filters]);
-
+    
+    // For homepage map with disableAutoFetch=true, we still want to show map features but not fetch
+    if (disableAutoFetch) {
+      // Only display explicitly provided properties when disableAutoFetch is true
+      if (propProperties.length > 0) {
+        setProperties(propProperties);
+      }
+      return;
+    }
+    
+    // Always use prop-provided properties if available
+    if (propProperties.length > 0) {
+      setProperties(propProperties);
+      return;
+    }
+    
+    // Only proceed with fetch if we have active filters or need properties
+    // and haven't already fetched in this render cycle
+    if (!fetchAttemptedRef.current) {
+      // First try to load from cache
+      const cacheLoaded = checkAndLoadCache();
+      
+      // If cache failed, do a fresh fetch
+      if (!cacheLoaded) {
+        fetchFilteredProperties();
+      }
+    }
+    
+    // No cleanup function - fetchAttemptedRef handles duplicate fetches
+  }, [filters, propProperties, disableAutoFetch, checkAndLoadCache]);
+  
   // Handle property click
   const handlePropertyClick = (property: Property) => {
     if (onPropertySelect) {
@@ -449,7 +683,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             <Popup>
               <div>
                 <h3 className="font-semibold text-sm">{uni.name}</h3>
-                <p className="text-xs text-gray-600">{t('universityLabel')}</p>
+                <p className="text-xs text-gray-600">{t('universityLabel') || 'University'}</p>
               </div>
             </Popup>
           </Marker>
@@ -468,7 +702,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 <Popup>
                   <div>
                     <h3 className="font-semibold text-sm">{station.name}</h3>
-                    <p className="text-xs text-gray-600">{t('tubeStationLabel')}</p>
+                    <p className="text-xs text-gray-600">{t('tubeStationLabel') || 'Tube Station'}</p>
                   </div>
                 </Popup>
               </Marker>
@@ -484,7 +718,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 <Popup>
                   <div>
                     <h3 className="font-semibold text-sm">{node.name}</h3>
-                    <p className="text-xs text-gray-600">{t('transportNodeLabel')}</p>
+                    <p className="text-xs text-gray-600">{t('transportNodeLabel') || 'Transport Node'}</p>
                     {node.lines && <p className="text-xs text-gray-600">Lines: {node.lines}</p>}
                   </div>
                 </Popup>
@@ -503,7 +737,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             <Popup>
               <div>
                 <h3 className="font-semibold text-sm">{landmark.name}</h3>
-                <p className="text-xs text-gray-600">{t('landmarkLabel')}</p>
+                <p className="text-xs text-gray-600">{t('landmarkLabel') || 'Landmark'}</p>
               </div>
             </Popup>
           </Marker>
@@ -519,7 +753,62 @@ const MapComponent: React.FC<MapComponentProps> = ({
             <Popup>
               <div>
                 <h3 className="font-semibold text-sm">{park.name}</h3>
-                <p className="text-xs text-gray-600">{t('parkLabel')}</p>
+                <p className="text-xs text-gray-600">{t('parkLabel') || 'Park'}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Render Neighborhood Markers */}
+        {showNeighborhoods && londonNeighborhoods.map((neighborhood) => (
+          <Marker
+            key={neighborhood.id}
+            position={[neighborhood.lat, neighborhood.lng]}
+            icon={createNeighborhoodIcon(neighborhood.type)}
+          >
+            <Popup>
+              <div>
+                <h3 className="font-semibold text-sm">{neighborhood.name}</h3>
+                <p className="text-xs text-gray-600">
+                  {neighborhood.type === "student-area" 
+                    ? (t('studentAreaLabel') || 'Student Area')
+                    : neighborhood.type === "academic" 
+                      ? (t('academicAreaLabel') || 'Academic Area')
+                      : neighborhood.type === "residential"
+                        ? (t('residentialAreaLabel') || 'Residential Area')
+                        : neighborhood.type === "entertainment"
+                          ? (t('entertainmentAreaLabel') || 'Entertainment District')
+                          : neighborhood.type === "transport-hub"
+                            ? (t('transportHubLabel') || 'Transport Hub')
+                            : (t('neighborhoodLabel') || 'Neighborhood')}
+                </p>
+                {neighborhood.description && (
+                  <p className="text-xs text-gray-500 mt-1">{neighborhood.description}</p>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Render Shopping Areas */}
+        {showShoppingAreas && shoppingAreas.map((area) => (
+          <Marker
+            key={area.id}
+            position={[area.lat, area.lng]}
+            icon={createShoppingIcon(area.type)}
+          >
+            <Popup>
+              <div>
+                <h3 className="font-semibold text-sm">{area.name}</h3>
+                <p className="text-xs text-gray-600">
+                  {area.type === "shopping-street" 
+                    ? (t('shoppingStreetLabel') || 'Shopping Street')
+                    : area.type === "shopping-market" 
+                      ? (t('shoppingMarketLabel') || 'Market')
+                      : area.type === "food-market"
+                        ? (t('foodMarketLabel') || 'Food Market')
+                        : (t('shoppingCenterLabel') || 'Shopping Center')}
+                </p>
               </div>
             </Popup>
           </Marker>
@@ -583,11 +872,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     {property.address}
                   </p>
                   {property.images && property.images.length > 0 && (
-                    <div className="mt-2">
-                      <img
+                    <div className="mt-2 relative w-full h-24">
+                      <Image
                         src={property.images[0]}
                         alt={property.title}
-                        className="w-full h-24 object-cover rounded"
+                        fill
+                        sizes="100%"
+                        className="object-cover rounded"
+                        style={{objectFit: "cover"}}
                       />
                     </div>
                   )}
@@ -614,3 +906,4 @@ const MapComponent: React.FC<MapComponentProps> = ({
 };
 
 export default MapComponent;
+

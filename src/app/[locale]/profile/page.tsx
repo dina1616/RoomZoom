@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/AuthContext';
 import PropertyCard from '@/components/PropertyCard';
+import InquiryList from '@/components/InquiryList';
 import { motion } from 'framer-motion';
 
 interface Review {
@@ -130,6 +131,17 @@ export default function ProfilePage() {
                   {t('editProfile')}
                 </button>
               </div>
+            </motion.section>
+
+            {/* Inquiries Section */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="mb-12"
+            >
+              <h2 className="text-2xl font-semibold mb-6">{t('myInquiries')}</h2>
+              <InquiryList role="student" className="mb-12" />
             </motion.section>
 
             {/* Favorites Section */}
